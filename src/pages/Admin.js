@@ -23,7 +23,7 @@ export default function Admin() {
   const [fields, setFields] = useState([]);
   const [title, setTitle] = useState("Untitled Survey");
   const [description, setDescription] = useState("");
-  const [targetEmail, setTargetEmail] = useState(""); // New state for assigning
+  const [targetEmail, setTargetEmail] = useState("");
   const [entries, setEntries] = useState([]);
   const [tab, setTab] = useState("fields");
   const [message, setMessage] = useState("");
@@ -67,7 +67,6 @@ export default function Admin() {
       }, { headers: { Authorization: `Bearer ${token}` } });
       
       showMessage(`Survey sent successfully to ${targetEmail}`);
-      // Reset the form builder for the next survey
       setFields([]);
       setTitle("Untitled Survey");
       setDescription("");
@@ -337,21 +336,27 @@ export default function Admin() {
                           {entry.isCompleted ? "COMPLETED" : "PENDING"}
                         </span>
                       </div>
+                      
+                      {/* THIS IS THE RESTORED SECTION */}
                       <div style={{ textAlign: "right" }}>
-  <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
-  
-  {!entry.isCompleted && (
-    <button 
-      onClick={() => {
-        navigator.clipboard.writeText(`${window.location.origin}/survey/${entry._id}`);
-        alert("Unique survey link copied to clipboard!");
-      }} 
-      style={{ marginTop: "6px", padding: "4px 10px", fontSize: "11px", background: "#eef2ff", color: "#6366f1", border: "1px solid #c7d2fe", borderRadius: "4px", cursor: "pointer", fontWeight: "700" }}
-    >
-      Copy Link
-    </button>
-  )}
-</div>
+                        <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</p>
+                        
+                        {!entry.isCompleted && (
+                          <button 
+                            onClick={() => {
+                              const link = `${window.location.origin}/survey/${entry._id}`;
+                              navigator.clipboard.writeText(link);
+                              alert(`Unique survey link copied to clipboard!\n${link}`);
+                            }} 
+                            style={{ marginTop: "8px", padding: "6px 12px", fontSize: "11px", background: "#eef2ff", color: "#6366f1", border: "1px solid #c7d2fe", borderRadius: "4px", cursor: "pointer", fontWeight: "700" }}
+                          >
+                            🔗 Copy Link
+                          </button>
+                        )}
+                      </div>
+                      {/* END OF RESTORED SECTION */}
+
                     </div>
                     {entry.isCompleted && (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
