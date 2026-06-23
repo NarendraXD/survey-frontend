@@ -16,11 +16,13 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      const res = await axios.post(`${API}/auth/login`, form);
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("email", res.data.email || form.email);
-      const isAdmin = (res.data.email || form.email).toLowerCase().includes("admin");
-      navigate(isAdmin ? "/admin" : "/survey");
+      // Replace the bottom part of your try block with this:
+const res = await axios.post(`${API}/auth/login`, form);
+localStorage.setItem("token", res.data.token);
+localStorage.setItem("email", res.data.email || form.email);
+
+// Force navigation to admin regardless of email
+navigate("/admin");
     } catch (err) {
       setError(err.response?.data?.error || "Invalid email or password");
     }
