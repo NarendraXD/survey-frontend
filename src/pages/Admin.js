@@ -20,6 +20,7 @@ export default function Admin() {
     if (!token) { navigate("/login"); return; }
     fetchConfig();
     fetchEntries();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchConfig = async () => {
