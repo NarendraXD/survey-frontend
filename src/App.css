@@ -37,8 +37,13 @@
   }
 }
 body {
-  background: #f4f6f9;
-  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #09090b; /* Matches your dark theme background */
+}
+
+* {
+  box-sizing: border-box;
 }
 
 .container {
