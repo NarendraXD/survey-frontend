@@ -153,8 +153,8 @@ export default function Admin() {
             )}
 
             <div style={{ background: "#0f1117", borderRadius: "10px", padding: "20px 32px", marginBottom: "16px", border: "1px solid #1e293b" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94a3b8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Assign To User (Email)</label>
-              <input value={targetEmail} onChange={e => setTargetEmail(e.target.value)} placeholder="user@company.com" style={{ width: "100%", padding: "12px 14px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94a3b8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Assign To User </label>
+              <input value={targetEmail} onChange={e => setTargetEmail(e.target.value)} placeholder="User" style={{ width: "100%", padding: "12px 14px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             <div style={{ background: "#fff", borderRadius: "10px", padding: "28px 32px", marginBottom: "16px", border: "1px solid #e5e7eb", borderLeft: "4px solid #6366f1" }}>
