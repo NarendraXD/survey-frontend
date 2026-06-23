@@ -1,3 +1,12 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #09090b; /* Matches your dark theme background */
+}
+
+* {
+  box-sizing: border-box;
+}
 .App {
   text-align: center;
 }
@@ -36,11 +45,6 @@
     transform: rotate(360deg);
   }
 }
-body {
-  margin: 0;
-  padding: 0;
-  background-color: #09090b; /* Matches your dark theme background */
-}
 
 * {
   box-sizing: border-box;
@@ -49,7 +53,7 @@ body {
 .container {
   max-width: 600px;
   margin: 40px auto;
-  background: white;
+  background: #18181b;
   padding: 25px;
   border-radius: 10px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
