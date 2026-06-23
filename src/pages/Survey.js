@@ -58,13 +58,113 @@ export default function Survey() {
   const renderField = (field) => {
     switch (field.type) {
       case "section":
-        return <div style={{ paddingBottom: "4px" }}>{field.label && <p style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>{field.label}</p>}<div style={{ height: "1px", background: "#e2e8f0", marginTop: "10px" }} /></div>;
+        return (
+          <div style={{ paddingBottom: "4px" }}>
+            {field.label && <p style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>{field.label}</p>}
+            <div style={{ height: "1px", background: "#e2e8f0", marginTop: "10px" }} />
+          </div>
+        );
+
       case "long_text":
-        return <textarea name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} rows={4} placeholder="Type your answer here..." style={{ ...inputBase(field.name), resize: "vertical" }} />;
+        return (
+          <textarea
+            name={field.name}
+            value={form[field.name] || ""}
+            onChange={handleChange}
+            onFocus={() => setFocused(field.name)}
+            onBlur={() => setFocused(null)}
+            required={field.required}
+            rows={4}
+            placeholder="Type your answer here..."
+            style={{ ...inputBase(field.name), resize: "vertical" }}
+          />
+        );
+
       case "multiple_choice":
-        return <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>{field.options?.map((opt, i) => { const selected = form[field.name] === opt; return <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${selected ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: selected ? "#eef2ff" : "#fff", cursor: "pointer" }}><input type="radio" name={field.name} value={opt} checked={selected} onChange={handleChange} style={{ display: "none" }} /><span style={{ fontSize: "14px", color: selected ? "#4338ca" : "#374151", fontWeight: selected ? "600" : "400" }}>{opt}</span></label>; })}</div>;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {field.options?.map((opt, i) => {
+              const selected = form[field.name] === opt;
+              return (
+                <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${selected ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: selected ? "#eef2ff" : "#fff", cursor: "pointer", transition: "all 0.15s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: `2px solid ${selected ? "#6366f1" : "#cbd5e1"}`, background: selected ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {selected && <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#fff" }} />}
+                  </div>
+                  <input type="radio" name={field.name} value={opt} checked={selected} onChange={handleChange} style={{ display: "none" }} />
+                  <span style={{ fontSize: "14px", color: selected ? "#4338ca" : "#374151", fontWeight: selected ? "600" : "400" }}>{opt}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+
       case "checkbox":
-        return <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>{field.options?.map((opt, i) => { const checked = (form[field.name] || []).includes(opt); return <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${checked ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: checked ? "#eef2ff" : "#fff", cursor: "pointer" }}><input type="checkbox" checked={checked} onChange={e => handleCheckbox(field.name, opt, e.target.checked)} style={{ display: "none" }} /><span style={{ fontSize: "14px", color: checked ? "#4338ca" : "#374151", fontWeight: checked ? "600" : "400" }}>{opt}</span></label>; })}</div>;
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {field.options?.map((opt, i) => {
+              const checked = (form[field.name] || []).includes(opt);
+              return (
+                <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${checked ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: checked ? "#eef2ff" : "#fff", cursor: "pointer", transition: "all 0.15s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "4px", border: `2px solid ${checked ? "#6366f1" : "#cbd5e1"}`, background: checked ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {checked && <span style={{ color: "#fff", fontSize: "12px", fontWeight: "800", lineHeight: 1 }}>✓</span>}
+                  </div>
+                  <input type="checkbox" checked={checked} onChange={e => handleCheckbox(field.name, opt, e.target.checked)} style={{ display: "none" }} />
+                  <span style={{ fontSize: "14px", color: checked ? "#4338ca" : "#374151", fontWeight: checked ? "600" : "400" }}>{opt}</span>
+                </label>
+              );
+            })}
+          </div>
+        );
+
+      case "dropdown":
+        return (
+          <select
+            name={field.name}
+            value={form[field.name] || ""}
+            onChange={handleChange}
+            required={field.required}
+            style={{ ...inputBase(field.name), background: "#fff" }}
+          >
+            <option value="">Select an option</option>
+            {field.options?.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+          </select>
+        );
+
+      case "linear_scale":
+        const min = field.scaleMin ?? 1;
+        const max = field.scaleMax ?? 5;
+        const scale = Array.from({ length: max - min + 1 }, (_, i) => i + min);
+        return (
+          <div>
+            <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+              {scale.map(val => {
+                const selected = form[field.name] === val;
+                return (
+                  <button key={val} type="button" onClick={() => setForm({ ...form, [field.name]: val })} style={{ width: "46px", height: "46px", borderRadius: "8px", border: `1.5px solid ${selected ? "#6366f1" : "#e2e8f0"}`, background: selected ? "#6366f1" : "#fff", color: selected ? "#fff" : "#374151", fontWeight: "700", fontSize: "15px", cursor: "pointer", transition: "all 0.15s" }}>
+                    {val}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+              <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>Not likely</span>
+              <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>Very likely</span>
+            </div>
+          </div>
+        );
+
+      case "date":
+        return <input type="date" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} style={inputBase(field.name)} />;
+
+      case "time":
+        return <input type="time" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} style={inputBase(field.name)} />;
+
+      case "email":
+        return <input type="email" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="example@email.com" style={inputBase(field.name)} />;
+
+      case "number":
+        return <input type="number" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="Enter a number" style={inputBase(field.name)} />;
+
       default:
         return <input type="text" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="Your answer" style={inputBase(field.name)} />;
     }
