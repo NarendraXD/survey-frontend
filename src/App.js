@@ -19,7 +19,6 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/survey/:id" element={<Survey />} />
-        // added route 
       </Routes>
     </BrowserRouter>
   );
