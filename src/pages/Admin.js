@@ -20,7 +20,7 @@ const FIELD_TYPES = [
 ];
 
 export default function Admin() {
-  const [view, setView] = useState("dashboard"); // 'dashboard' or 'builder'
+  const [view, setView] = useState("dashboard");
   
   const [entries, setEntries] = useState([]);
   const [fields, setFields] = useState([]);
@@ -28,6 +28,9 @@ export default function Admin() {
   const [description, setDescription] = useState("");
   const [targetEmail, setTargetEmail] = useState("");
   const [editingId, setEditingId] = useState(null);
+  
+  // NEW: State to track which completed survey's answers we are looking at
+  const [viewingResponse, setViewingResponse] = useState(null); 
   
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -114,13 +117,12 @@ export default function Admin() {
   const handleLogout = () => { localStorage.clear(); navigate("/login"); };
   const needsOptions = (type) => ["multiple_choice", "checkbox", "dropdown"].includes(type);
 
-  // --- THEME STYLES ---
   const colors = { bg: "#09090b", sidebar: "#0f0f11", card: "#141416", border: "#27272a", textPrimary: "#f8fafc", textMuted: "#94a3b8", purple: "#9e8cfc", green: "#4ade80", pink: "#f472b6", inputBg: "#18181b" };
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: "'Inter', 'Segoe UI', sans-serif", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: "'Inter', 'Segoe UI', sans-serif", overflow: "hidden", position: "relative" }}>
       
-      {/* SIDEBAR - Cleaned up to only show Survey tools */}
+      {/* SIDEBAR */}
       <div style={{ width: "240px", background: colors.sidebar, borderRight: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", padding: "24px 0" }}>
         <div style={{ padding: "0 24px", marginBottom: "40px", display: "flex", alignItems: "center", gap: "10px" }}>
           <div style={{ width: "20px", height: "20px", background: colors.textPrimary, borderRadius: "4px", transform: "rotate(45deg)" }} />
@@ -167,7 +169,6 @@ export default function Admin() {
           {view === "dashboard" && (
             <div style={{ flex: 1, padding: "32px", maxWidth: "1200px" }}>
               
-              {/* TABS & ACTION */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${colors.border}`, paddingBottom: "16px", marginBottom: "32px" }}>
                 <div style={{ display: "flex", gap: "24px" }}>
                   <span style={{ fontSize: "14px", fontWeight: "600", color: "#fff", borderBottom: `2px solid ${colors.purple}`, paddingBottom: "16px", marginBottom: "-17px" }}>All Surveys</span>
@@ -214,12 +215,24 @@ export default function Admin() {
                               <span style={{ padding: "4px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", background: entry.isCompleted ? "rgba(74, 222, 128, 0.1)" : "rgba(244, 114, 182, 0.1)", color: entry.isCompleted ? colors.green : colors.pink }}>
                                 {entry.isCompleted ? "Complete" : "Pending"}
                               </span>
-                              {!entry.isCompleted && (
+                              
+                              {/* ACTIONS CONDITIONAL RENDERING */}
+                              {entry.isCompleted ? (
+                                // IF COMPLETE: Show the "View Responses" Button
+                                <button 
+                                  onClick={() => setViewingResponse(entry)} 
+                                  style={{ background: "transparent", border: `1px solid ${colors.green}`, color: colors.green, padding: "4px 10px", borderRadius: "6px", cursor: "pointer", fontSize: "11px", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px" }}
+                                >
+                                  👁️ View Answers
+                                </button>
+                              ) : (
+                                // IF PENDING: Show the Edit and Copy Link buttons
                                 <>
                                   <button onClick={() => handleEditClick(entry)} style={{ background: "transparent", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "14px" }} title="Edit Survey">✏️</button>
                                   <button onClick={() => { const link = `${window.location.origin}/survey/${entry._id}`; navigator.clipboard.writeText(link); alert(`Link copied!\n${link}`); }} style={{ background: "transparent", border: "none", color: colors.purple, cursor: "pointer", fontSize: "14px" }} title="Copy Link">🔗</button>
                                 </>
                               )}
+
                             </div>
                           </td>
                         </tr>
@@ -246,16 +259,13 @@ export default function Admin() {
                 {message && <div style={{ background: "rgba(74, 222, 128, 0.1)", border: `1px solid ${colors.green}`, color: colors.green, padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{message}</div>}
                 {error && <div style={{ background: "rgba(244, 114, 182, 0.1)", border: `1px solid ${colors.pink}`, color: colors.pink, padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
 
-                {/* Assignment & Title */}
                 <div style={{ background: colors.card, borderRadius: "12px", padding: "24px", marginBottom: "16px", border: `1px solid ${colors.border}` }}>
                   <label style={darkLabel}>Assign To User (Email)</label>
                   <input value={targetEmail} onChange={e => setTargetEmail(e.target.value)} placeholder="user@company.com" style={{ ...darkInput, marginBottom: "20px" }} />
-                  
                   <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Survey Title" style={{ width: "100%", border: "none", background: "transparent", fontSize: "24px", fontWeight: "800", color: "#fff", outline: "none", marginBottom: "8px" }} />
                   <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Add a description..." style={{ width: "100%", border: "none", background: "transparent", fontSize: "14px", color: colors.textMuted, outline: "none" }} />
                 </div>
 
-                {/* Render Fields */}
                 {fields.map((f, i) => (
                   <div key={f.name} style={{ background: colors.card, borderRadius: "12px", padding: "24px", marginBottom: "12px", border: `1px solid ${colors.border}`, borderLeft: `4px solid ${colors.purple}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
@@ -288,7 +298,6 @@ export default function Admin() {
                   </div>
                 ))}
 
-                {/* Add Field Box */}
                 <div style={{ background: "transparent", borderRadius: "12px", padding: "24px", border: `1px dashed ${colors.border}`, marginTop: "24px" }}>
                   <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: "700", color: colors.textMuted, textTransform: "uppercase" }}>Add New Question</p>
                   <form onSubmit={handleAddField}>
@@ -315,7 +324,6 @@ export default function Admin() {
                   </form>
                 </div>
 
-                {/* Final Submit */}
                 <div style={{ marginTop: "32px", padding: "24px", background: colors.card, borderRadius: "12px", border: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div>
                     <p style={{ margin: 0, fontSize: "14px", fontWeight: "600" }}>Ready to send?</p>
@@ -331,6 +339,52 @@ export default function Admin() {
 
         </div>
       </div>
+
+      {/* NEW: THE VIEW RESPONSES MODAL OVERLAY */}
+      {viewingResponse && (
+        <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(5px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" }}>
+          
+          <div style={{ background: colors.bg, border: `1px solid ${colors.border}`, width: "100%", maxWidth: "600px", maxHeight: "85vh", borderRadius: "16px", display: "flex", flexDirection: "column", boxShadow: "0 20px 40px rgba(0,0,0,0.4)" }}>
+            
+            {/* Modal Header */}
+            <div style={{ padding: "24px 32px", borderBottom: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center", background: colors.card, borderRadius: "16px 16px 0 0" }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700", color: "#fff" }}>{viewingResponse.title} Answers</h3>
+                <p style={{ margin: "4px 0 0", fontSize: "13px", color: colors.textMuted }}>Submitted by: <span style={{ color: colors.green, fontWeight: "600" }}>{viewingResponse.assignedTo}</span></p>
+              </div>
+              <button onClick={() => setViewingResponse(null)} style={{ background: colors.inputBg, border: `1px solid ${colors.border}`, color: "#fff", width: "32px", height: "32px", borderRadius: "8px", cursor: "pointer", fontWeight: "700", display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+            </div>
+
+            {/* Modal Body (Scrollable Answers) */}
+            <div style={{ padding: "32px", overflowY: "auto", flex: 1 }}>
+              {(viewingResponse.fields || []).filter(f => f.type !== 'section').map((field, index) => {
+                const answer = viewingResponse.responseData?.[field.name];
+                const displayAnswer = Array.isArray(answer) ? answer.join(", ") : String(answer || "No answer provided");
+                
+                return (
+                  <div key={index} style={{ marginBottom: "20px", background: colors.card, padding: "20px", borderRadius: "12px", border: `1px solid ${colors.border}` }}>
+                    <p style={{ margin: "0 0 10px", fontSize: "14px", color: colors.textMuted, fontWeight: "600", lineHeight: "1.4" }}>
+                      Q: {field.label}
+                    </p>
+                    <div style={{ background: colors.inputBg, padding: "12px 16px", borderRadius: "8px", borderLeft: `3px solid ${colors.purple}` }}>
+                      <p style={{ margin: 0, fontSize: "15px", color: "#fff", fontWeight: "500", whiteSpace: "pre-wrap" }}>
+                        {displayAnswer}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* If somehow no fields match the response */}
+              {(!viewingResponse.fields || viewingResponse.fields.length === 0) && (
+                <p style={{ color: colors.textMuted, textAlign: "center" }}>No questions found in this survey record.</p>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
