@@ -1,95 +1,31 @@
-body {
+/* 1. Global Reset */
+* {
   margin: 0;
   padding: 0;
-  background-color: #09090b; /* Matches your dark theme background */
-}
-
-* {
-  box-sizing: border-box;
-}
-.App {
-  text-align: center;
-}
-
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-* {
   box-sizing: border-box;
 }
 
-.container {
-  max-width: 600px;
-  margin: 40px auto;
-  background: #18181b;
-  padding: 25px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+html, body {
+  background-color: #09090b !important;
+  color: #f8fafc;
 }
 
-.title {
-  text-align: center;
-  margin-bottom: 10px;
+/* 2. Sleek Floating Scrollbar */
+::-webkit-scrollbar {
+  width: 10px !important; /* Slightly wider for a better look */
 }
 
-.subtitle {
-  text-align: center;
-  color: #666;
-  margin-bottom: 20px;
+::-webkit-scrollbar-track {
+  background: #09090b !important; /* Deep dark background */
 }
 
-input,
-textarea {
-  width: 100%;
-  padding: 10px;
-  margin-top: 6px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
+::-webkit-scrollbar-thumb {
+  background: #27272a !important; /* Dark grey thumb */
+  border: 2px solid #09090b !important; /* Creates the "floating" gap */
+  border-radius: 10px !important; /* Fully rounded edges */
 }
 
-button {
-  width: 100%;
-  padding: 12px;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 5px;
+::-webkit-scrollbar-thumb:hover {
+  background: #4a4a52 !important; /* Soft highlight on hover */
   cursor: pointer;
-}
-
-button:hover {
-  opacity: 0.9;
 }
