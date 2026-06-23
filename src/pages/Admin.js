@@ -20,16 +20,22 @@ const FIELD_TYPES = [
 ];
 
 export default function Admin() {
+  // Navigation State
+  const [view, setView] = useState("dashboard"); // 'dashboard' or 'builder'
+  
+  // Data State
+  const [entries, setEntries] = useState([]);
   const [fields, setFields] = useState([]);
   const [title, setTitle] = useState("Untitled Survey");
   const [description, setDescription] = useState("");
   const [targetEmail, setTargetEmail] = useState("");
-  const [editingId, setEditingId] = useState(null); // NEW: Tracks if we are editing
-  const [entries, setEntries] = useState([]);
-  const [tab, setTab] = useState("fields");
+  const [editingId, setEditingId] = useState(null);
+  
+  // UI State
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [newField, setNewField] = useState({ label: "", type: "short_text", required: true, options: ["Option 1", "Option 2"], scaleMin: 1, scaleMax: 5 });
+  
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const email = localStorage.getItem("email") || "";
@@ -37,7 +43,7 @@ export default function Admin() {
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
     fetchEntries();
-  }, [tab]);
+  }, [view]);
 
   const fetchEntries = async () => {
     try {
@@ -46,24 +52,23 @@ export default function Admin() {
     } catch { }
   };
 
-  // NEW: Loads an existing survey into the builder
   const handleEditClick = (entry) => {
     setEditingId(entry._id);
     setTitle(entry.title);
     setDescription(entry.description || "");
     setFields(entry.fields || []);
     setTargetEmail(entry.assignedTo);
-    setTab("fields"); // Switch back to the builder tab
-    window.scrollTo(0, 0); // Scroll to top
+    setView("builder");
+    window.scrollTo(0, 0);
   };
 
-  // NEW: Resets the builder back to a blank state
   const clearBuilder = () => {
     setEditingId(null);
     setFields([]);
     setTitle("Untitled Survey");
     setDescription("");
     setTargetEmail("");
+    setView("dashboard");
   };
 
   const handleSendSurvey = async () => {
@@ -72,18 +77,15 @@ export default function Admin() {
 
     try {
       const payload = { title, description, fields, assignedTo: targetEmail, adminEmail: email };
-
       if (editingId) {
-        // If editingId exists, send a PUT request to update
         await axios.put(`${API}/survey/edit/${editingId}`, payload, { headers: { Authorization: `Bearer ${token}` } });
         showMessage(`Survey updated for ${targetEmail}`);
       } else {
-        // Otherwise, create a brand new survey
         await axios.post(`${API}/survey/create`, payload, { headers: { Authorization: `Bearer ${token}` } });
         showMessage(`Survey sent successfully to ${targetEmail}`);
       }
-      
       clearBuilder();
+      fetchEntries();
     } catch (err) {
       setError(err.response?.data?.error || "Failed to process survey.");
       setTimeout(() => setError(""), 3000);
@@ -115,205 +117,302 @@ export default function Admin() {
   const handleLogout = () => { localStorage.clear(); navigate("/login"); };
   const needsOptions = (type) => ["multiple_choice", "checkbox", "dropdown"].includes(type);
 
+  // --- THEME STYLES ---
+  const colors = { bg: "#09090b", sidebar: "#0f0f11", card: "#141416", border: "#27272a", textPrimary: "#f8fafc", textMuted: "#94a3b8", purple: "#9e8cfc", green: "#4ade80", pink: "#f472b6", inputBg: "#18181b" };
+
   return (
-    <div style={{ minHeight: "100vh", background: "#f4f5f7", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
-      {/* Navbar */}
-      <div style={{ background: "#0f1117", padding: "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", position: "sticky", top: 0, zIndex: 100 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <div style={{ width: "8px", height: "28px", background: "#6366f1", borderRadius: "2px" }} />
-          <span style={{ fontSize: "17px", fontWeight: "700", color: "#fff", letterSpacing: "0.3px" }}>FormBuilder</span>
-          <span style={{ background: "#1e1f2e", color: "#818cf8", fontSize: "11px", padding: "3px 10px", borderRadius: "4px", fontWeight: "700", letterSpacing: "1px" }}>ADMIN</span>
+    <div style={{ display: "flex", height: "100vh", background: colors.bg, color: colors.textPrimary, fontFamily: "'Inter', 'Segoe UI', sans-serif", overflow: "hidden" }}>
+      
+      {/* SIDEBAR */}
+      <div style={{ width: "240px", background: colors.sidebar, borderRight: `1px solid ${colors.border}`, display: "flex", flexDirection: "column", padding: "24px 0" }}>
+        <div style={{ padding: "0 24px", marginBottom: "40px", display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ width: "20px", height: "20px", background: colors.textPrimary, borderRadius: "4px", transform: "rotate(45deg)" }} />
+          <span style={{ fontSize: "20px", fontWeight: "700", letterSpacing: "0.5px" }}>FormBuilder</span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
-          <span style={{ fontSize: "13px", color: "#6b7280" }}>{email}</span>
-          <button onClick={handleLogout} style={{ padding: "7px 16px", background: "transparent", border: "1px solid #374151", borderRadius: "6px", cursor: "pointer", fontSize: "13px", color: "#9ca3af", fontWeight: "600" }}>Sign out</button>
+
+        <div style={{ padding: "0 16px", flex: 1 }}>
+          <p style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted, margin: "0 0 12px 12px", letterSpacing: "1px" }}>PRODUCT</p>
+          <div style={{ ...navItem, background: view === "dashboard" ? "rgba(255,255,255,0.05)" : "transparent", color: view === "dashboard" ? "#fff" : colors.textMuted }} onClick={() => setView("dashboard")}>
+            <span style={{ fontSize: "16px" }}>⊞</span> Dashboard
+          </div>
+          <div style={navItem}><span style={{ fontSize: "16px" }}>📈</span> Insights</div>
+          <div style={{ ...navItem, background: view === "builder" ? "rgba(255,255,255,0.05)" : "transparent", color: view === "builder" ? "#fff" : colors.textMuted }} onClick={() => clearBuilder()}>
+            <span style={{ fontSize: "16px" }}>📝</span> Form Builder <span style={{ marginLeft: "auto", background: colors.green, color: "#000", fontSize: "10px", padding: "2px 6px", borderRadius: "10px", fontWeight: "700" }}>NEW</span>
+          </div>
+
+          <p style={{ fontSize: "11px", fontWeight: "700", color: colors.textMuted, margin: "32px 0 12px 12px", letterSpacing: "1px" }}>ACCOUNT</p>
+          <div style={navItem}><span style={{ fontSize: "16px" }}>👛</span> Wallet</div>
+          <div style={navItem}><span style={{ fontSize: "16px" }}>⚙️</span> Settings</div>
+        </div>
+
+        <div style={{ padding: "0 16px" }}>
+          <button onClick={handleLogout} style={{ ...navItem, color: colors.pink, border: "none", background: "transparent", width: "100%", cursor: "pointer", display: "flex", alignItems: "center" }}>
+            <span style={{ fontSize: "16px" }}>↪</span> Log Out
+          </button>
         </div>
       </div>
 
-      <div style={{ maxWidth: "880px", margin: "0 auto", padding: "36px 24px" }}>
-        {message && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#15803d", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px", fontWeight: "600" }}>{message}</div>}
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
-
-        {/* Tabs */}
-        <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "28px", gap: "0" }}>
-          {[{ key: "fields", label: editingId ? "✏️ Edit Survey" : "Send New Survey" }, { key: "entries", label: `Sent / Responses  ${entries.length}` }].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: "12px 24px", background: "transparent", border: "none", borderBottom: tab === t.key ? "2px solid #6366f1" : "2px solid transparent", marginBottom: "-2px", cursor: "pointer", fontWeight: tab === t.key ? "700" : "500", color: tab === t.key ? "#6366f1" : "#6b7280", fontSize: "14px", letterSpacing: "0.2px" }}>
-              {t.label}
-            </button>
-          ))}
+      {/* MAIN LAYOUT */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        
+        {/* TOP HEADER */}
+        <div style={{ height: "70px", borderBottom: `1px solid ${colors.border}`, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", background: colors.bg }}>
+          <div style={{ background: colors.inputBg, border: `1px solid ${colors.border}`, borderRadius: "20px", padding: "8px 16px", display: "flex", alignItems: "center", width: "300px" }}>
+            <span style={{ color: colors.textMuted, marginRight: "10px", fontSize: "14px" }}>🔍</span>
+            <input placeholder="Search surveys..." style={{ background: "transparent", border: "none", color: "#fff", outline: "none", width: "100%", fontSize: "13px" }} />
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+            <span style={{ fontSize: "18px", color: colors.textMuted }}>🔔</span>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ textAlign: "right" }}>
+                <p style={{ margin: 0, fontSize: "13px", fontWeight: "600", color: "#fff" }}>Admin User</p>
+                <p style={{ margin: 0, fontSize: "11px", color: colors.textMuted }}>{email}</p>
+              </div>
+              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: colors.purple, display: "flex", alignItems: "center", justifyContent: "center", color: "#000", fontWeight: "700", fontSize: "14px" }}>AD</div>
+            </div>
+          </div>
         </div>
 
-        {tab === "fields" && (
-          <div>
-            {editingId && (
-              <div style={{ background: "#eff6ff", border: "1px solid #bfdbfe", padding: "12px 20px", borderRadius: "8px", marginBottom: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "13px", color: "#1e3a8a", fontWeight: "600" }}>You are currently editing an existing survey.</span>
-                <button onClick={clearBuilder} style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", fontSize: "13px", fontWeight: "700", textDecoration: "underline" }}>Cancel Edit</button>
-              </div>
-            )}
-
-            <div style={{ background: "#0f1117", borderRadius: "10px", padding: "20px 32px", marginBottom: "16px", border: "1px solid #1e293b" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94a3b8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Assign To User </label>
-              <input value={targetEmail} onChange={e => setTargetEmail(e.target.value)} placeholder="User" style={{ width: "100%", padding: "12px 14px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} />
-            </div>
-
-            <div style={{ background: "#fff", borderRadius: "10px", padding: "28px 32px", marginBottom: "16px", border: "1px solid #e5e7eb", borderLeft: "4px solid #6366f1" }}>
-              <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Survey Title" style={{ width: "100%", border: "none", fontSize: "22px", fontWeight: "800", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box", borderBottom: "2px solid #f1f5f9" }} />
-              <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Add a description..." style={{ width: "100%", border: "none", fontSize: "14px", color: "#64748b", padding: "8px 0 0", outline: "none", boxSizing: "border-box" }} />
-            </div>
-
-            {fields.map((f, i) => (
-              <div key={f.name} style={{ background: "#fff", borderRadius: "10px", padding: "22px 28px", marginBottom: "10px", border: "1px solid #e5e7eb", borderLeft: f.type === "section" ? "4px solid #94a3b8" : "4px solid #6366f1" }}>
-                {f.type === "section" ? (
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "800", color: "#94a3b8", letterSpacing: "2px", textTransform: "uppercase" }}>Section</p>
-                      <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} placeholder="Section title" style={{ border: "none", fontSize: "16px", fontWeight: "700", color: "#0f172a", outline: "none", width: "100%" }} />
-                    </div>
-                    <div style={{ display: "flex", gap: "6px" }}>
-                      <button onClick={() => moveField(i, -1)} style={iconBtn}>↑</button>
-                      <button onClick={() => moveField(i, 1)} style={iconBtn}>↓</button>
-                      <button onClick={() => handleDelete(f.name)} style={{ ...iconBtn, color: "#dc2626", borderColor: "#fecaca" }}>✕</button>
-                    </div>
+        {/* SCROLLABLE CONTENT */}
+        <div style={{ flex: 1, overflowY: "auto", display: "flex" }}>
+          
+          {/* DASHBOARD VIEW */}
+          {view === "dashboard" && (
+            <>
+              <div style={{ flex: 1, padding: "32px" }}>
+                
+                {/* TABS & ACTION */}
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `1px solid ${colors.border}`, paddingBottom: "16px", marginBottom: "32px" }}>
+                  <div style={{ display: "flex", gap: "24px" }}>
+                    <span style={{ fontSize: "14px", fontWeight: "600", color: "#fff", borderBottom: `2px solid ${colors.purple}`, paddingBottom: "16px", marginBottom: "-17px" }}>All Surveys</span>
+                    <span style={{ fontSize: "14px", fontWeight: "600", color: colors.textMuted }}>Drafts</span>
+                    <span style={{ fontSize: "14px", fontWeight: "600", color: colors.textMuted }}>Completed</span>
                   </div>
-                ) : (
-                  <div>
+                  <button onClick={() => clearBuilder()} style={{ background: "transparent", border: `1px solid ${colors.purple}`, color: colors.purple, padding: "8px 16px", borderRadius: "20px", fontSize: "13px", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "6px" }}>
+                    + New Survey
+                  </button>
+                </div>
+
+                {/* STAT CARDS */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "24px" }}>
+                  <div style={{ background: colors.green, borderRadius: "12px", padding: "20px", color: "#000", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <div style={{ background: "#000", padding: "12px", borderRadius: "10px", color: colors.green }}>👛</div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", opacity: 0.8 }}>Available Balance</p>
+                        <p style={{ margin: 0, fontSize: "24px", fontWeight: "800" }}>$14,823.1</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "24px" }}>↗</span>
+                  </div>
+                  <div style={{ background: colors.pink, borderRadius: "12px", padding: "20px", color: "#000", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+                      <div style={{ background: "#000", padding: "12px", borderRadius: "10px", color: colors.pink }}>🔥</div>
+                      <div>
+                        <p style={{ margin: 0, fontSize: "12px", fontWeight: "600", opacity: 0.8 }}>Sent this month</p>
+                        <p style={{ margin: 0, fontSize: "24px", fontWeight: "800" }}>{entries.length} Surveys</p>
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "24px" }}>↗</span>
+                  </div>
+                </div>
+
+                {/* AI BANNER */}
+                <div style={{ background: colors.purple, borderRadius: "12px", padding: "32px", color: "#000", position: "relative", overflow: "hidden", marginBottom: "32px" }}>
+                  <h2 style={{ margin: "0 0 16px", fontSize: "22px", fontWeight: "800", maxWidth: "250px", lineHeight: "1.3" }}>Create Survey By Using Our AI</h2>
+                  <div style={{ background: "rgba(255,255,255,0.3)", padding: "6px", borderRadius: "8px", display: "inline-flex", alignItems: "center", width: "400px", backdropFilter: "blur(4px)" }}>
+                    <input placeholder="Eg. market research for new brand" style={{ background: "transparent", border: "none", color: "#000", padding: "8px 12px", width: "100%", outline: "none", fontSize: "13px" }} />
+                    <button style={{ background: "#000", color: "#fff", border: "none", padding: "8px 20px", borderRadius: "6px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Generate</button>
+                  </div>
+                  {/* Decorative Circles */}
+                  <div style={{ position: "absolute", right: "60px", top: "50%", transform: "translateY(-50%)", width: "120px", height: "120px", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "80px", height: "80px", background: "rgba(255,255,255,0.4)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800" }}>START</div>
+                  </div>
+                </div>
+
+                {/* YOUR SURVEYS TABLE */}
+                <div style={{ background: colors.card, borderRadius: "12px", border: `1px solid ${colors.border}`, padding: "24px" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                    <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>Your Surveys</h3>
+                    <button onClick={() => clearBuilder()} style={{ background: colors.purple, color: "#000", border: "none", padding: "8px 16px", borderRadius: "20px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>Create New</button>
+                  </div>
+
+                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                    <thead>
+                      <tr style={{ borderBottom: `1px solid ${colors.border}`, textAlign: "left", color: colors.textMuted, fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                        <th style={{ padding: "12px 0", fontWeight: "600" }}>Product Name</th>
+                        <th style={{ padding: "12px 0", fontWeight: "600" }}>Date Sent</th>
+                        <th style={{ padding: "12px 0", fontWeight: "600" }}>Assigned To</th>
+                        <th style={{ padding: "12px 0", fontWeight: "600" }}>Status / Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {entries.map((entry, idx) => {
+                        const iconColor = entry.isCompleted ? colors.green : (idx % 2 === 0 ? colors.pink : colors.purple);
+                        return (
+                          <tr key={entry._id} style={{ borderBottom: `1px solid ${colors.border}` }}>
+                            <td style={{ padding: "16px 0", display: "flex", alignItems: "center", gap: "12px" }}>
+                              <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: iconColor, display: "flex", alignItems: "center", justifyContent: "center", color: "#000", fontSize: "14px" }}>📝</div>
+                              <div>
+                                <p style={{ margin: 0, fontSize: "14px", fontWeight: "600", color: "#fff" }}>{entry.title}</p>
+                                <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.textMuted }}>{entry.fields?.length || 0} Questions</p>
+                              </div>
+                            </td>
+                            <td style={{ padding: "16px 0" }}>
+                              <p style={{ margin: 0, fontSize: "13px", color: "#fff" }}>{new Date(entry.createdAt).toLocaleDateString()}</p>
+                              <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.textMuted }}>{new Date(entry.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                            </td>
+                            <td style={{ padding: "16px 0", fontSize: "13px", color: "#fff" }}>{entry.assignedTo}</td>
+                            <td style={{ padding: "16px 0" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                                <span style={{ padding: "4px 12px", borderRadius: "20px", fontSize: "11px", fontWeight: "700", background: entry.isCompleted ? "rgba(74, 222, 128, 0.1)" : "rgba(244, 114, 182, 0.1)", color: entry.isCompleted ? colors.green : colors.pink }}>
+                                  {entry.isCompleted ? "Complete" : "Pending"}
+                                </span>
+                                {!entry.isCompleted && (
+                                  <>
+                                    <button onClick={() => handleEditClick(entry)} style={{ background: "transparent", border: "none", color: colors.textMuted, cursor: "pointer", fontSize: "14px" }}>✏️</button>
+                                    <button onClick={() => { const link = `${window.location.origin}/survey/${entry._id}`; navigator.clipboard.writeText(link); alert(`Link copied!\n${link}`); }} style={{ background: "transparent", border: "none", color: colors.purple, cursor: "pointer", fontSize: "14px" }}>🔗</button>
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                      {entries.length === 0 && (
+                        <tr><td colSpan="4" style={{ padding: "32px 0", textAlign: "center", color: colors.textMuted, fontSize: "13px" }}>No surveys found. Click Create New to assign one!</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* RIGHT SIDEBAR - TEMPLATES */}
+              <div style={{ width: "320px", background: colors.card, borderLeft: `1px solid ${colors.border}`, padding: "32px", overflowY: "auto" }}>
+                <h3 style={{ margin: "0 0 4px", fontSize: "18px", fontWeight: "700" }}>Use Templates</h3>
+                <p style={{ margin: "0 0 24px", fontSize: "12px", color: colors.textMuted }}>Use Templates To Create Surveys</p>
+
+                {[
+                  { title: "Brand Awareness", tags: ["NPS", "Tracker"] },
+                  { title: "Logo Testing", tags: ["NPS", "A/B Test"] },
+                  { title: "Product Naming", tags: ["NPS", "Tracker"] }
+                ].map((tpl, i) => (
+                  <div key={i} style={{ background: colors.inputBg, border: `1px solid ${colors.border}`, borderRadius: "12px", padding: "20px", marginBottom: "16px" }}>
+                    <h4 style={{ margin: "0 0 8px", fontSize: "14px", fontWeight: "600" }}>{tpl.title}</h4>
+                    <p style={{ margin: "0 0 16px", fontSize: "11px", color: colors.textMuted, lineHeight: "1.5" }}>Lorem ipsum dolor sit amet consectetur dolor sit.</p>
+                    <div style={{ display: "flex", gap: "8px", marginBottom: "16px" }}>
+                      {tpl.tags.map(tag => <span key={tag} style={{ background: "rgba(74, 222, 128, 0.1)", color: colors.green, padding: "2px 8px", borderRadius: "4px", fontSize: "10px", fontWeight: "600" }}>{tag}</span>)}
+                    </div>
+                    <button style={{ width: "100%", padding: "10px", background: colors.purple, color: "#000", border: "none", borderRadius: "8px", fontSize: "12px", fontWeight: "700", cursor: "pointer" }}>View Template Survey</button>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* BUILDER VIEW (DARK MODE) */}
+          {view === "builder" && (
+            <div style={{ flex: 1, padding: "40px", overflowY: "auto" }}>
+              <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "24px" }}>
+                  <h2 style={{ margin: 0, fontSize: "24px", fontWeight: "700" }}>{editingId ? "✏️ Edit Survey" : "📝 New Form Builder"}</h2>
+                  <button onClick={() => setView("dashboard")} style={{ background: "transparent", color: colors.textMuted, border: "none", cursor: "pointer", fontSize: "14px", fontWeight: "600" }}>✕ Cancel</button>
+                </div>
+
+                {message && <div style={{ background: "rgba(74, 222, 128, 0.1)", border: `1px solid ${colors.green}`, color: colors.green, padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{message}</div>}
+                {error && <div style={{ background: "rgba(244, 114, 182, 0.1)", border: `1px solid ${colors.pink}`, color: colors.pink, padding: "12px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
+
+                {/* Assignment & Title */}
+                <div style={{ background: colors.card, borderRadius: "12px", padding: "24px", marginBottom: "16px", border: `1px solid ${colors.border}` }}>
+                  <label style={darkLabel}>Assign To User (Email)</label>
+                  <input value={targetEmail} onChange={e => setTargetEmail(e.target.value)} placeholder="user@company.com" style={{ ...darkInput, marginBottom: "20px" }} />
+                  
+                  <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Survey Title" style={{ width: "100%", border: "none", background: "transparent", fontSize: "24px", fontWeight: "800", color: "#fff", outline: "none", marginBottom: "8px" }} />
+                  <input value={description} onChange={e => setDescription(e.target.value)} placeholder="Add a description..." style={{ width: "100%", border: "none", background: "transparent", fontSize: "14px", color: colors.textMuted, outline: "none" }} />
+                </div>
+
+                {/* Render Fields */}
+                {fields.map((f, i) => (
+                  <div key={f.name} style={{ background: colors.card, borderRadius: "12px", padding: "24px", marginBottom: "12px", border: `1px solid ${colors.border}`, borderLeft: `4px solid ${colors.purple}` }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
                       <div style={{ flex: 1 }}>
-                        <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} placeholder="Question" style={{ width: "100%", border: "none", borderBottom: "2px solid #f1f5f9", fontSize: "15px", fontWeight: "600", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box" }} />
-                        <div style={{ display: "flex", gap: "12px", marginTop: "10px", alignItems: "center" }}>
-                          <span style={{ fontSize: "11px", background: "#eef2ff", color: "#6366f1", padding: "3px 10px", borderRadius: "4px", fontWeight: "700", letterSpacing: "0.5px" }}>{FIELD_TYPES.find(t => t.value === f.type)?.label?.toUpperCase()}</span>
-                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b", cursor: "pointer" }}><input type="checkbox" checked={f.required} onChange={e => { const u = [...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff); setFields(u); }} style={{ accentColor: "#6366f1" }} /> Required</label>
+                        <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} placeholder="Question Label" style={{ width: "100%", border: "none", borderBottom: `1px solid ${colors.border}`, background: "transparent", fontSize: "16px", fontWeight: "600", color: "#fff", paddingBottom: "8px", outline: "none" }} />
+                        <div style={{ display: "flex", gap: "12px", marginTop: "12px", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", background: "rgba(158, 140, 252, 0.1)", color: colors.purple, padding: "4px 10px", borderRadius: "4px", fontWeight: "700" }}>{FIELD_TYPES.find(t => t.value === f.type)?.label?.toUpperCase()}</span>
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: colors.textMuted, cursor: "pointer" }}><input type="checkbox" checked={f.required} onChange={e => { const u = [...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff); setFields(u); }} /> Required</label>
                         </div>
                       </div>
                       <div style={{ display: "flex", gap: "6px" }}>
-                        <button onClick={() => moveField(i, -1)} style={iconBtn}>↑</button>
-                        <button onClick={() => moveField(i, 1)} style={iconBtn}>↓</button>
-                        <button onClick={() => handleDelete(f.name)} style={{ ...iconBtn, color: "#dc2626", borderColor: "#fecaca" }}>✕</button>
+                        <button onClick={() => moveField(i, -1)} style={darkIconBtn}>↑</button>
+                        <button onClick={() => moveField(i, 1)} style={darkIconBtn}>↓</button>
+                        <button onClick={() => handleDelete(f.name)} style={{ ...darkIconBtn, color: colors.pink }}>✕</button>
                       </div>
                     </div>
+
                     {needsOptions(f.type) && (
-                      <div style={{ marginTop: "16px", paddingLeft: "4px" }}>
+                      <div style={{ marginTop: "16px" }}>
                         {f.options?.map((opt, oi) => (
                           <div key={oi} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
-                            <div style={{ width: "16px", height: "16px", borderRadius: f.type === "checkbox" ? "3px" : "50%", border: "2px solid #cbd5e1", flexShrink: 0 }} />
-                            <input value={opt} onChange={e => updateOption(i, oi, e.target.value)} style={{ flex: 1, border: "none", borderBottom: "1px solid #f1f5f9", padding: "4px 0", fontSize: "14px", color: "#374151", outline: "none" }} />
-                            <button onClick={() => { removeOption(i, oi); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: "16px", lineHeight: 1 }}>✕</button>
+                            <div style={{ width: "14px", height: "14px", borderRadius: f.type === "checkbox" ? "3px" : "50%", border: `2px solid ${colors.textMuted}` }} />
+                            <input value={opt} onChange={e => updateOption(i, oi, e.target.value)} style={{ flex: 1, border: "none", borderBottom: `1px solid ${colors.border}`, background: "transparent", color: "#fff", padding: "4px 0", outline: "none", fontSize: "14px" }} />
+                            <button onClick={() => removeOption(i, oi)} style={{ background: "none", border: "none", color: colors.textMuted, cursor: "pointer" }}>✕</button>
                           </div>
                         ))}
-                        <button onClick={() => addOption(i)} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600", padding: "4px 0", marginTop: "4px" }}>+ Add option</button>
-                      </div>
-                    )}
-                    {f.type === "linear_scale" && (
-                      <div style={{ marginTop: "14px", display: "flex", gap: "20px", alignItems: "center" }}>
-                        <div><label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MIN</label><select value={f.scaleMin} onChange={e => { const u = [...fields]; u[i].scaleMin = Number(e.target.value); setFields(u); }} style={selectSt}>{[0, 1].map(v => <option key={v} value={v}>{v}</option>)}</select></div>
-                        <div><label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MAX</label><select value={f.scaleMax} onChange={e => { const u = [...fields]; u[i].scaleMax = Number(e.target.value); setFields(u); }} style={selectSt}>{[2, 3, 4, 5, 6, 7, 8, 9, 10].map(v => <option key={v} value={v}>{v}</option>)}</select></div>
+                        <button onClick={() => addOption(i)} style={{ background: "none", border: "none", color: colors.purple, cursor: "pointer", fontSize: "12px", fontWeight: "600", marginTop: "8px" }}>+ Add option</button>
                       </div>
                     )}
                   </div>
-                )}
-              </div>
-            ))}
+                ))}
 
-            <div style={{ background: "#fff", borderRadius: "10px", padding: "24px 28px", border: "1px dashed #cbd5e1", marginTop: "16px" }}>
-              <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: "700", color: "#374151", letterSpacing: "0.5px", textTransform: "uppercase" }}>Add Question</p>
-              <form onSubmit={handleAddField}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
-                  <div><label style={lbl}>Question Label</label><input placeholder="e.g. What is your age?" value={newField.label} onChange={e => setNewField({ ...newField, label: e.target.value })} style={inp} /></div>
-                  <div><label style={lbl}>Type</label><select value={newField.type} onChange={e => setNewField({ ...newField, type: e.target.value })} style={inp}>{FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
-                </div>
-                {needsOptions(newField.type) && (
-                  <div style={{ marginBottom: "14px" }}>
-                    <label style={lbl}>Options</label>
-                    {newField.options.map((opt, oi) => (
-                      <div key={oi} style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-                        <input value={opt} onChange={e => { const opts = [...newField.options]; opts[oi] = e.target.value; setNewField({ ...newField, options: opts }); }} style={{ ...inp, marginBottom: 0 }} placeholder={`Option ${oi + 1}`} />
-                        <button type="button" onClick={() => setNewField({ ...newField, options: newField.options.filter((_, idx) => idx !== oi) })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: "18px" }}>✕</button>
-                      </div>
-                    ))}
-                    <button type="button" onClick={() => setNewField({ ...newField, options: [...newField.options, `Option ${newField.options.length + 1}`] })} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>+ Add option</button>
-                  </div>
-                )}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#64748b", cursor: "pointer" }}><input type="checkbox" checked={newField.required} onChange={e => setNewField({ ...newField, required: e.target.checked })} style={{ accentColor: "#6366f1" }} /> Mark as required</label>
-                  <button type="submit" style={{ padding: "10px 24px", background: "#f8fafc", color: "#0f172a", border: "1px solid #e2e8f0", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}>Add Question</button>
-                </div>
-              </form>
-            </div>
-
-            <div style={{ marginTop: "24px", textAlign: "right" }}>
-              <button onClick={handleSendSurvey} style={{ padding: "14px 32px", background: editingId ? "#10b981" : "#6366f1", color: "#fff", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: editingId ? "0 4px 14px rgba(16, 185, 129, 0.3)" : "0 4px 14px rgba(99, 102, 241, 0.3)" }}>
-                {editingId ? "Update Survey" : "Send Survey to User"}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Responses Tab */}
-        {tab === "entries" && (
-          <div>
-            <div style={{ background: "#fff", borderRadius: "10px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
-              <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fafafa" }}>
-                <div>
-                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>All Surveys</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#94a3b8" }}>{entries.length} records</p>
-                </div>
-                <button onClick={fetchEntries} style={{ padding: "8px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "7px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Refresh</button>
-              </div>
-              {entries.length === 0 ? (
-                <div style={{ padding: "80px", textAlign: "center" }}>
-                  <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8", fontWeight: "500" }}>No surveys have been created.</p>
-                </div>
-              ) : (
-                entries.map((entry, i) => (
-                  <div key={entry._id} style={{ padding: "20px 24px", borderBottom: i < entries.length - 1 ? "1px solid #f8fafc" : "none" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
-                      <div>
-                        <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a", marginRight: "10px" }}>{entry.title}</span>
-                        <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "12px", background: entry.isCompleted ? "#dcfce7" : "#fef9c3", color: entry.isCompleted ? "#166534" : "#854d0e", fontWeight: "700" }}>
-                          {entry.isCompleted ? "COMPLETED" : "PENDING"}
-                        </span>
-                      </div>
-                      
-                      <div style={{ textAlign: "right" }}>
-                        <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</p>
-                        
-                        {!entry.isCompleted && (
-                          <div style={{ display: "flex", gap: "8px", justifyContent: "flex-end", marginTop: "8px" }}>
-                            <button onClick={() => handleEditClick(entry)} style={{ padding: "6px 12px", fontSize: "11px", background: "#f8fafc", color: "#475569", border: "1px solid #e2e8f0", borderRadius: "4px", cursor: "pointer", fontWeight: "700" }}>
-                              ✏️ Edit
-                            </button>
-                            <button onClick={() => { const link = `${window.location.origin}/survey/${entry._id}`; navigator.clipboard.writeText(link); alert(`Link copied!\n${link}`); }} style={{ padding: "6px 12px", fontSize: "11px", background: "#eef2ff", color: "#6366f1", border: "1px solid #c7d2fe", borderRadius: "4px", cursor: "pointer", fontWeight: "700" }}>
-                              🔗 Copy Link
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
+                {/* Add Field Box */}
+                <div style={{ background: "transparent", borderRadius: "12px", padding: "24px", border: `1px dashed ${colors.border}`, marginTop: "24px" }}>
+                  <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: "700", color: colors.textMuted, textTransform: "uppercase" }}>Add New Question</p>
+                  <form onSubmit={handleAddField}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", marginBottom: "16px" }}>
+                      <div><label style={darkLabel}>Question Label</label><input placeholder="e.g. What is your age?" value={newField.label} onChange={e => setNewField({ ...newField, label: e.target.value })} style={darkInput} /></div>
+                      <div><label style={darkLabel}>Type</label><select value={newField.type} onChange={e => setNewField({ ...newField, type: e.target.value })} style={darkInput}>{FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}</select></div>
                     </div>
-                    {entry.isCompleted && (
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                        {entry.responseData && Object.entries(entry.responseData).map(([key, val]) => (
-                          <div key={key} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
-                            <p style={{ margin: 0, fontSize: "10px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>{key.replace(/_\d+$/, "").replace(/_/g, " ")}</p>
-                            <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#0f172a", fontWeight: "500" }}>{Array.isArray(val) ? val.join(", ") : String(val)}</p>
+                    {needsOptions(newField.type) && (
+                      <div style={{ marginBottom: "16px" }}>
+                        <label style={darkLabel}>Options</label>
+                        {newField.options.map((opt, oi) => (
+                          <div key={oi} style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                            <input value={opt} onChange={e => { const opts = [...newField.options]; opts[oi] = e.target.value; setNewField({ ...newField, options: opts }); }} style={darkInput} placeholder={`Option ${oi + 1}`} />
+                            <button type="button" onClick={() => setNewField({ ...newField, options: newField.options.filter((_, idx) => idx !== oi) })} style={{ background: "none", border: "none", color: colors.pink, cursor: "pointer" }}>✕</button>
                           </div>
                         ))}
+                        <button type="button" onClick={() => setNewField({ ...newField, options: [...newField.options, `Option ${newField.options.length + 1}`] })} style={{ background: "none", border: "none", color: colors.purple, cursor: "pointer", fontSize: "12px", fontWeight: "600" }}>+ Add option</button>
                       </div>
                     )}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: colors.textMuted }}><input type="checkbox" checked={newField.required} onChange={e => setNewField({ ...newField, required: e.target.checked })} /> Mark as required</label>
+                      <button type="submit" style={{ padding: "10px 24px", background: colors.inputBg, color: "#fff", border: `1px solid ${colors.border}`, borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}>Add Question to Form</button>
+                    </div>
+                  </form>
+                </div>
+
+                {/* Final Submit */}
+                <div style={{ marginTop: "32px", padding: "24px", background: colors.card, borderRadius: "12px", border: `1px solid ${colors.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: "14px", fontWeight: "600" }}>Ready to send?</p>
+                    <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.textMuted }}>This survey will be securely dispatched to {targetEmail || "the assigned user"}.</p>
                   </div>
-                ))
-              )}
+                  <button onClick={handleSendSurvey} style={{ padding: "14px 32px", background: colors.purple, color: "#000", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "800", cursor: "pointer" }}>
+                    {editingId ? "Update Survey" : "Dispatch Survey 🚀"}
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+        </div>
       </div>
     </div>
   );
 }
 
-const iconBtn = { padding: "6px 10px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "700", color: "#475569" };
-const lbl = { display: "block", fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "6px", letterSpacing: "0.3px", textTransform: "uppercase" };
-const inp = { width: "100%", padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: "7px", fontSize: "14px", boxSizing: "border-box", background: "#fafafa", color: "#0f172a", outline: "none" };
-const selectSt = { padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "14px", marginLeft: "8px", background: "#fafafa" };
+// Reusable styled objects
+const navItem = { padding: "12px 24px", display: "flex", alignItems: "center", gap: "12px", cursor: "pointer", fontSize: "14px", fontWeight: "500", transition: "all 0.2s" };
+const darkLabel = { display: "block", fontSize: "11px", fontWeight: "700", color: "#94a3b8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" };
+const darkInput = { width: "100%", padding: "12px 14px", borderRadius: "8px", border: "1px solid #27272a", background: "#18181b", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" };
+const darkIconBtn = { padding: "6px 10px", background: "#18181b", border: "1px solid #27272a", borderRadius: "6px", cursor: "pointer", fontSize: "13px", color: "#94a3b8" };
