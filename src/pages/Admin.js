@@ -338,9 +338,20 @@ export default function Admin() {
                         </span>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
-                        <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</p>
-                      </div>
+  <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
+  
+  {!entry.isCompleted && (
+    <button 
+      onClick={() => {
+        navigator.clipboard.writeText(`${window.location.origin}/survey/${entry._id}`);
+        alert("Unique survey link copied to clipboard!");
+      }} 
+      style={{ marginTop: "6px", padding: "4px 10px", fontSize: "11px", background: "#eef2ff", color: "#6366f1", border: "1px solid #c7d2fe", borderRadius: "4px", cursor: "pointer", fontWeight: "700" }}
+    >
+      Copy Link
+    </button>
+  )}
+</div>
                     </div>
                     {entry.isCompleted && (
                       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
