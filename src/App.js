@@ -12,12 +12,16 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* If they are an admin with a token, go to admin. Otherwise, ALWAYS go to login */}
         <Route path="/" element={
-          token ? (isAdmin ? <Navigate to="/admin" /> : <Navigate to="/survey" />) : <Navigate to="/login" />
+          token && isAdmin ? <Navigate to="/admin" /> : <Navigate to="/login" />
         } />
+        
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<Admin />} />
+        
+        {/* The public "Magic Link" route */}
         <Route path="/survey/:id" element={<Survey />} />
       </Routes>
     </BrowserRouter>
