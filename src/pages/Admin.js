@@ -16,7 +16,7 @@ const FIELD_TYPES = [
   { value: "time", label: "Time" },
   { value: "email", label: "Email" },
   { value: "number", label: "Number" },
-  { value: "section", label: "── Section Divider" },
+  { value: "section", label: "Section Divider" },
 ];
 
 export default function Admin() {
@@ -62,7 +62,7 @@ export default function Admin() {
         description: d !== undefined ? d : description,
         fields: updatedFields
       }, { headers: { Authorization: `Bearer ${token}` } });
-      showMessage("Saved!");
+      showMessage("Changes saved");
     } catch {
       setError("Failed to save.");
       setTimeout(() => setError(""), 3000);
@@ -128,40 +128,41 @@ export default function Admin() {
   const needsOptions = (type) => ["multiple_choice", "checkbox", "dropdown"].includes(type);
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0f2f5", fontFamily: "'Segoe UI', Arial, sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#f4f5f7", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
 
       {/* Navbar */}
-      <div style={{ background: "#fff", borderBottom: "1px solid #e0e0e0", padding: "0 32px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "64px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 1px 3px rgba(0,0,0,0.08)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "22px", fontWeight: "800", color: "#6750a4" }}>📋 SurveyApp</span>
-          <span style={{ background: "#ede9fe", color: "#6d28d9", fontSize: "11px", padding: "3px 10px", borderRadius: "20px", fontWeight: "700" }}>ADMIN</span>
-        </div>
+      <div style={{ background: "#0f1117", padding: "0 40px", display: "flex", alignItems: "center", justifyContent: "space-between", height: "60px", position: "sticky", top: 0, zIndex: 100 }}>
         <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-          <span style={{ fontSize: "13px", color: "#888" }}>{email}</span>
-          <button onClick={handleLogout} style={{ padding: "8px 18px", background: "#f5f5f5", border: "1px solid #ddd", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>Logout</button>
+          <div style={{ width: "8px", height: "28px", background: "#6366f1", borderRadius: "2px" }} />
+          <span style={{ fontSize: "17px", fontWeight: "700", color: "#fff", letterSpacing: "0.3px" }}>FormBuilder</span>
+          <span style={{ background: "#1e1f2e", color: "#818cf8", fontSize: "11px", padding: "3px 10px", borderRadius: "4px", fontWeight: "700", letterSpacing: "1px" }}>ADMIN</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <span style={{ fontSize: "13px", color: "#6b7280" }}>{email}</span>
+          <button onClick={handleLogout} style={{ padding: "7px 16px", background: "transparent", border: "1px solid #374151", borderRadius: "6px", cursor: "pointer", fontSize: "13px", color: "#9ca3af", fontWeight: "600" }}>Sign out</button>
         </div>
       </div>
 
-      <div style={{ maxWidth: "860px", margin: "0 auto", padding: "32px 20px" }}>
+      <div style={{ maxWidth: "880px", margin: "0 auto", padding: "36px 24px" }}>
 
         {/* Share Banner */}
-        <div style={{ background: "linear-gradient(135deg, #6750a4, #9c27b0)", borderRadius: "12px", padding: "20px 24px", marginBottom: "24px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ background: "#0f1117", borderRadius: "10px", padding: "18px 24px", marginBottom: "28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", border: "1px solid #1e293b" }}>
           <div>
-            <p style={{ margin: 0, fontWeight: "700", color: "#fff", fontSize: "15px" }}>📎 Share Survey Link</p>
-            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#e9d5ff" }}>{surveyLink}</p>
+            <p style={{ margin: 0, fontWeight: "600", color: "#e2e8f0", fontSize: "13px", letterSpacing: "0.5px", textTransform: "uppercase" }}>Survey Link</p>
+            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#6366f1", fontFamily: "monospace" }}>{surveyLink}</p>
           </div>
-          <button onClick={() => { navigator.clipboard.writeText(surveyLink); showMessage("Link copied!"); }} style={{ padding: "10px 20px", background: "#fff", color: "#6750a4", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "14px" }}>
+          <button onClick={() => { navigator.clipboard.writeText(surveyLink); showMessage("Link copied to clipboard"); }} style={{ padding: "9px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px", letterSpacing: "0.3px" }}>
             Copy Link
           </button>
         </div>
 
-        {message && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#16a34a", padding: "12px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "14px", fontWeight: "600" }}>✓ {message}</div>}
-        {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "12px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "14px" }}>{error}</div>}
+        {message && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#15803d", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px", fontWeight: "600" }}>{message}</div>}
+        {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
 
         {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", background: "#e5e7eb", padding: "4px", borderRadius: "12px", marginBottom: "24px", width: "fit-content" }}>
-          {[{ key: "fields", label: "⚙️ Form Builder" }, { key: "entries", label: `📊 Responses (${entries.length})` }].map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: "9px 22px", background: tab === t.key ? "#fff" : "transparent", border: "none", borderRadius: "9px", cursor: "pointer", fontWeight: tab === t.key ? "700" : "500", color: tab === t.key ? "#6750a4" : "#6b7280", fontSize: "14px", boxShadow: tab === t.key ? "0 1px 4px rgba(0,0,0,0.1)" : "none" }}>
+        <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "28px", gap: "0" }}>
+          {[{ key: "fields", label: "Form Builder" }, { key: "entries", label: `Responses  ${entries.length}` }].map(t => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: "12px 24px", background: "transparent", border: "none", borderBottom: tab === t.key ? "2px solid #6366f1" : "2px solid transparent", marginBottom: "-2px", cursor: "pointer", fontWeight: tab === t.key ? "700" : "500", color: tab === t.key ? "#6366f1" : "#6b7280", fontSize: "14px", letterSpacing: "0.2px" }}>
               {t.label}
             </button>
           ))}
@@ -169,55 +170,50 @@ export default function Admin() {
 
         {tab === "fields" && (
           <div>
-            {/* Survey Title & Description */}
-            <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", marginBottom: "16px", border: "1px solid #e5e7eb", borderTop: "6px solid #6750a4" }}>
+            {/* Title Card */}
+            <div style={{ background: "#fff", borderRadius: "10px", padding: "28px 32px", marginBottom: "16px", border: "1px solid #e5e7eb", borderLeft: "4px solid #6366f1" }}>
               <input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 onBlur={() => saveConfig(fields, title, description)}
                 placeholder="Survey Title"
-                style={{ width: "100%", border: "none", borderBottom: "2px solid #e5e7eb", fontSize: "24px", fontWeight: "700", color: "#111", padding: "4px 0", marginBottom: "12px", outline: "none", boxSizing: "border-box" }}
+                style={{ width: "100%", border: "none", fontSize: "22px", fontWeight: "800", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box", borderBottom: "2px solid #f1f5f9" }}
               />
               <input
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 onBlur={() => saveConfig(fields, title, description)}
-                placeholder="Survey description (optional)"
-                style={{ width: "100%", border: "none", borderBottom: "1px solid #e5e7eb", fontSize: "14px", color: "#666", padding: "4px 0", outline: "none", boxSizing: "border-box" }}
+                placeholder="Add a description..."
+                style={{ width: "100%", border: "none", fontSize: "14px", color: "#64748b", padding: "8px 0 0", outline: "none", boxSizing: "border-box" }}
               />
             </div>
 
-            {/* Fields List */}
+            {/* Fields */}
             {fields.map((f, i) => (
-              <div key={f.name} style={{ background: "#fff", borderRadius: "12px", padding: "20px 24px", marginBottom: "12px", border: "1px solid #e5e7eb", borderLeft: f.type === "section" ? "4px solid #9c27b0" : "4px solid #6750a4" }}>
+              <div key={f.name} style={{ background: "#fff", borderRadius: "10px", padding: "22px 28px", marginBottom: "10px", border: "1px solid #e5e7eb", borderLeft: f.type === "section" ? "4px solid #94a3b8" : "4px solid #6366f1" }}>
                 {f.type === "section" ? (
-                  <div>
-                    <p style={{ margin: 0, fontWeight: "700", color: "#6750a4", fontSize: "13px", textTransform: "uppercase", letterSpacing: "1px" }}>── Section Divider</p>
-                    <input
-                      value={f.label}
-                      onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }}
-                      onBlur={() => saveConfig(fields)}
-                      placeholder="Section title (optional)"
-                      style={{ marginTop: "8px", width: "100%", border: "none", borderBottom: "1px solid #eee", fontSize: "16px", fontWeight: "600", color: "#333", padding: "4px 0", outline: "none", boxSizing: "border-box" }}
-                    />
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <div style={{ flex: 1 }}>
+                      <p style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "800", color: "#94a3b8", letterSpacing: "2px", textTransform: "uppercase" }}>Section</p>
+                      <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} onBlur={() => saveConfig(fields)} placeholder="Section title" style={{ border: "none", fontSize: "16px", fontWeight: "700", color: "#0f172a", outline: "none", width: "100%" }} />
+                    </div>
+                    <div style={{ display: "flex", gap: "6px" }}>
+                      <button onClick={() => moveField(i, -1)} style={iconBtn}>↑</button>
+                      <button onClick={() => moveField(i, 1)} style={iconBtn}>↓</button>
+                      <button onClick={() => handleDelete(f.name)} style={{ ...iconBtn, color: "#dc2626", borderColor: "#fecaca" }}>✕</button>
+                    </div>
                   </div>
                 ) : (
                   <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
                       <div style={{ flex: 1 }}>
-                        <input
-                          value={f.label}
-                          onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }}
-                          onBlur={() => saveConfig(fields)}
-                          placeholder="Question"
-                          style={{ width: "100%", border: "none", borderBottom: "2px solid #e5e7eb", fontSize: "16px", fontWeight: "600", color: "#111", padding: "4px 0", outline: "none", boxSizing: "border-box" }}
-                        />
-                        <div style={{ display: "flex", gap: "12px", marginTop: "8px", alignItems: "center", flexWrap: "wrap" }}>
-                          <span style={{ fontSize: "12px", background: "#ede9fe", color: "#6d28d9", padding: "3px 10px", borderRadius: "20px", fontWeight: "600" }}>
-                            {FIELD_TYPES.find(t => t.value === f.type)?.label}
+                        <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} onBlur={() => saveConfig(fields)} placeholder="Question" style={{ width: "100%", border: "none", borderBottom: "2px solid #f1f5f9", fontSize: "15px", fontWeight: "600", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box" }} />
+                        <div style={{ display: "flex", gap: "12px", marginTop: "10px", alignItems: "center" }}>
+                          <span style={{ fontSize: "11px", background: "#eef2ff", color: "#6366f1", padding: "3px 10px", borderRadius: "4px", fontWeight: "700", letterSpacing: "0.5px" }}>
+                            {FIELD_TYPES.find(t => t.value === f.type)?.label?.toUpperCase()}
                           </span>
-                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#666", cursor: "pointer" }}>
-                            <input type="checkbox" checked={f.required} onChange={e => { const u = [...fields]; u[i].required = e.target.checked; setFields(u); saveConfig([...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff)); }} />
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b", cursor: "pointer" }}>
+                            <input type="checkbox" checked={f.required} onChange={e => { const u = [...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff); setFields(u); saveConfig(u); }} style={{ accentColor: "#6366f1" }} />
                             Required
                           </label>
                         </div>
@@ -225,41 +221,34 @@ export default function Admin() {
                       <div style={{ display: "flex", gap: "6px" }}>
                         <button onClick={() => moveField(i, -1)} style={iconBtn}>↑</button>
                         <button onClick={() => moveField(i, 1)} style={iconBtn}>↓</button>
-                        <button onClick={() => handleDelete(f.name)} style={{ ...iconBtn, color: "#dc2626", borderColor: "#fca5a5" }}>✕</button>
+                        <button onClick={() => handleDelete(f.name)} style={{ ...iconBtn, color: "#dc2626", borderColor: "#fecaca" }}>✕</button>
                       </div>
                     </div>
 
                     {needsOptions(f.type) && (
-                      <div style={{ marginTop: "12px" }}>
+                      <div style={{ marginTop: "16px", paddingLeft: "4px" }}>
                         {f.options?.map((opt, oi) => (
-                          <div key={oi} style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "6px" }}>
-                            <span style={{ color: "#aaa", fontSize: "16px" }}>{f.type === "checkbox" ? "☐" : f.type === "dropdown" ? `${oi + 1}.` : "○"}</span>
-                            <input
-                              value={opt}
-                              onChange={e => updateOption(i, oi, e.target.value)}
-                              onBlur={() => saveConfig(fields)}
-                              style={{ flex: 1, border: "none", borderBottom: "1px solid #e5e7eb", padding: "4px 0", fontSize: "14px", outline: "none" }}
-                            />
-                            <button onClick={() => { removeOption(i, oi); saveConfig(fields); }} style={{ background: "none", border: "none", color: "#aaa", cursor: "pointer", fontSize: "16px" }}>✕</button>
+                          <div key={oi} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+                            <div style={{ width: "16px", height: "16px", borderRadius: f.type === "checkbox" ? "3px" : "50%", border: "2px solid #cbd5e1", flexShrink: 0 }} />
+                            <input value={opt} onChange={e => updateOption(i, oi, e.target.value)} onBlur={() => saveConfig(fields)} style={{ flex: 1, border: "none", borderBottom: "1px solid #f1f5f9", padding: "4px 0", fontSize: "14px", color: "#374151", outline: "none" }} />
+                            <button onClick={() => { removeOption(i, oi); saveConfig(fields); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: "16px", lineHeight: 1 }}>✕</button>
                           </div>
                         ))}
-                        <button onClick={() => { addOption(i); saveConfig(fields); }} style={{ background: "none", border: "none", color: "#6750a4", cursor: "pointer", fontSize: "13px", fontWeight: "600", padding: "4px 0", marginTop: "4px" }}>
-                          + Add option
-                        </button>
+                        <button onClick={() => { addOption(i); }} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600", padding: "4px 0", marginTop: "4px" }}>+ Add option</button>
                       </div>
                     )}
 
                     {f.type === "linear_scale" && (
-                      <div style={{ marginTop: "12px", display: "flex", gap: "16px", alignItems: "center" }}>
+                      <div style={{ marginTop: "14px", display: "flex", gap: "20px", alignItems: "center" }}>
                         <div>
-                          <label style={{ fontSize: "12px", color: "#888" }}>Min</label>
-                          <select value={f.scaleMin} onChange={e => { const u = [...fields]; u[i].scaleMin = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectStyle}>
+                          <label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MIN</label>
+                          <select value={f.scaleMin} onChange={e => { const u = [...fields]; u[i].scaleMin = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectSt}>
                             {[0, 1].map(v => <option key={v} value={v}>{v}</option>)}
                           </select>
                         </div>
                         <div>
-                          <label style={{ fontSize: "12px", color: "#888" }}>Max</label>
-                          <select value={f.scaleMax} onChange={e => { const u = [...fields]; u[i].scaleMax = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectStyle}>
+                          <label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MAX</label>
+                          <select value={f.scaleMax} onChange={e => { const u = [...fields]; u[i].scaleMax = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectSt}>
                             {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(v => <option key={v} value={v}>{v}</option>)}
                           </select>
                         </div>
@@ -270,52 +259,42 @@ export default function Admin() {
               </div>
             ))}
 
-            {/* Add Field Form */}
-            <div style={{ background: "#fff", borderRadius: "12px", padding: "24px", border: "2px dashed #d1d5db", marginTop: "16px" }}>
-              <h3 style={{ margin: "0 0 16px", fontSize: "15px", fontWeight: "700", color: "#374151" }}>+ Add New Question</h3>
+            {/* Add Field */}
+            <div style={{ background: "#fff", borderRadius: "10px", padding: "24px 28px", border: "1px dashed #cbd5e1", marginTop: "16px" }}>
+              <p style={{ margin: "0 0 16px", fontSize: "13px", fontWeight: "700", color: "#374151", letterSpacing: "0.5px", textTransform: "uppercase" }}>Add Question</p>
               <form onSubmit={handleAddField}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginBottom: "14px" }}>
                   <div>
-                    <label style={labelStyle}>Question Label</label>
-                    <input
-                      placeholder="e.g. What is your age?"
-                      value={newField.label}
-                      onChange={e => setNewField({ ...newField, label: e.target.value })}
-                      style={inputStyle}
-                    />
+                    <label style={lbl}>Question Label</label>
+                    <input placeholder="e.g. What is your age?" value={newField.label} onChange={e => setNewField({ ...newField, label: e.target.value })} style={inp} />
                   </div>
                   <div>
-                    <label style={labelStyle}>Question Type</label>
-                    <select value={newField.type} onChange={e => setNewField({ ...newField, type: e.target.value })} style={inputStyle}>
+                    <label style={lbl}>Type</label>
+                    <select value={newField.type} onChange={e => setNewField({ ...newField, type: e.target.value })} style={inp}>
                       {FIELD_TYPES.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                     </select>
                   </div>
                 </div>
 
                 {needsOptions(newField.type) && (
-                  <div style={{ marginBottom: "12px" }}>
-                    <label style={labelStyle}>Options</label>
+                  <div style={{ marginBottom: "14px" }}>
+                    <label style={lbl}>Options</label>
                     {newField.options.map((opt, oi) => (
                       <div key={oi} style={{ display: "flex", gap: "8px", marginBottom: "6px" }}>
-                        <input
-                          value={opt}
-                          onChange={e => { const opts = [...newField.options]; opts[oi] = e.target.value; setNewField({ ...newField, options: opts }); }}
-                          style={{ ...inputStyle, marginBottom: 0 }}
-                          placeholder={`Option ${oi + 1}`}
-                        />
+                        <input value={opt} onChange={e => { const opts = [...newField.options]; opts[oi] = e.target.value; setNewField({ ...newField, options: opts }); }} style={{ ...inp, marginBottom: 0 }} placeholder={`Option ${oi + 1}`} />
                         <button type="button" onClick={() => setNewField({ ...newField, options: newField.options.filter((_, idx) => idx !== oi) })} style={{ background: "none", border: "none", color: "#dc2626", cursor: "pointer", fontSize: "18px" }}>✕</button>
                       </div>
                     ))}
-                    <button type="button" onClick={() => setNewField({ ...newField, options: [...newField.options, `Option ${newField.options.length + 1}`] })} style={{ background: "none", border: "none", color: "#6750a4", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>+ Add option</button>
+                    <button type="button" onClick={() => setNewField({ ...newField, options: [...newField.options, `Option ${newField.options.length + 1}`] })} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>+ Add option</button>
                   </div>
                 )}
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "14px", color: "#555", cursor: "pointer" }}>
-                    <input type="checkbox" checked={newField.required} onChange={e => setNewField({ ...newField, required: e.target.checked })} />
-                    Required field
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "13px", color: "#64748b", cursor: "pointer" }}>
+                    <input type="checkbox" checked={newField.required} onChange={e => setNewField({ ...newField, required: e.target.checked })} style={{ accentColor: "#6366f1" }} />
+                    Mark as required
                   </label>
-                  <button type="submit" style={{ padding: "10px 24px", background: "#6750a4", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "14px" }}>
+                  <button type="submit" style={{ padding: "10px 24px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}>
                     Add Question
                   </button>
                 </div>
@@ -324,36 +303,40 @@ export default function Admin() {
           </div>
         )}
 
-        {/* Entries Tab */}
+        {/* Responses Tab */}
         {tab === "entries" && (
-          <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
-            <div style={{ padding: "18px 24px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fafafa" }}>
-              <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700", color: "#111" }}>All Responses</h3>
-              <button onClick={fetchEntries} style={{ padding: "7px 16px", background: "#f3f4f6", border: "1px solid #d1d5db", borderRadius: "8px", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>↻ Refresh</button>
-            </div>
-            {entries.length === 0 ? (
-              <div style={{ padding: "60px", textAlign: "center", color: "#9ca3af" }}>
-                <p style={{ fontSize: "32px", margin: "0 0 8px" }}>📭</p>
-                <p style={{ margin: 0, fontWeight: "600" }}>No responses yet</p>
-              </div>
-            ) : (
-              entries.map((entry, i) => (
-                <div key={entry._id} style={{ padding: "20px 24px", borderBottom: i < entries.length - 1 ? "1px solid #f3f4f6" : "none" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
-                    <span style={{ fontSize: "13px", fontWeight: "700", color: "#6750a4" }}>Response #{entries.length - i}</span>
-                    <span style={{ fontSize: "12px", color: "#9ca3af" }}>{new Date(entry.createdAt).toLocaleString()}</span>
-                  </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                    {entry.responseData && Object.entries(entry.responseData).map(([key, val]) => (
-                      <div key={key} style={{ background: "#f9fafb", padding: "10px 14px", borderRadius: "8px", border: "1px solid #f3f4f6" }}>
-                        <p style={{ margin: 0, fontSize: "11px", color: "#9ca3af", textTransform: "capitalize", fontWeight: "600" }}>{key.replace(/_\d+$/,"").replace(/_/g, " ")}</p>
-                        <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#111", fontWeight: "500" }}>{Array.isArray(val) ? val.join(", ") : String(val)}</p>
-                      </div>
-                    ))}
-                  </div>
+          <div>
+            <div style={{ background: "#fff", borderRadius: "10px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+              <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fafafa" }}>
+                <div>
+                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>All Responses</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#94a3b8" }}>{entries.length} total submissions</p>
                 </div>
-              ))
-            )}
+                <button onClick={fetchEntries} style={{ padding: "8px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "7px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Refresh</button>
+              </div>
+              {entries.length === 0 ? (
+                <div style={{ padding: "80px", textAlign: "center" }}>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8", fontWeight: "500" }}>No responses submitted yet.</p>
+                </div>
+              ) : (
+                entries.map((entry, i) => (
+                  <div key={entry._id} style={{ padding: "20px 24px", borderBottom: i < entries.length - 1 ? "1px solid #f8fafc" : "none" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px" }}>
+                      <span style={{ fontSize: "12px", fontWeight: "700", color: "#6366f1", letterSpacing: "0.5px" }}>RESPONSE #{entries.length - i}</span>
+                      <span style={{ fontSize: "12px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</span>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                      {entry.responseData && Object.entries(entry.responseData).map(([key, val]) => (
+                        <div key={key} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
+                          <p style={{ margin: 0, fontSize: "10px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>{key.replace(/_\d+$/, "").replace(/_/g, " ")}</p>
+                          <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#0f172a", fontWeight: "500" }}>{Array.isArray(val) ? val.join(", ") : String(val)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -361,7 +344,7 @@ export default function Admin() {
   );
 }
 
-const iconBtn = { padding: "6px 10px", background: "#f9fafb", border: "1px solid #e5e7eb", borderRadius: "6px", cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#374151" };
-const labelStyle = { display: "block", fontSize: "13px", fontWeight: "600", color: "#374151", marginBottom: "6px" };
-const inputStyle = { width: "100%", padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box", background: "#fff" };
-const selectStyle = { padding: "6px 10px", border: "1px solid #d1d5db", borderRadius: "6px", fontSize: "14px", marginLeft: "8px" };
+const iconBtn = { padding: "6px 10px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "6px", cursor: "pointer", fontSize: "13px", fontWeight: "700", color: "#475569" };
+const lbl = { display: "block", fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "6px", letterSpacing: "0.3px", textTransform: "uppercase" };
+const inp = { width: "100%", padding: "10px 12px", border: "1px solid #e2e8f0", borderRadius: "7px", fontSize: "14px", boxSizing: "border-box", background: "#fafafa", color: "#0f172a", outline: "none" };
+const selectSt = { padding: "6px 10px", border: "1px solid #e2e8f0", borderRadius: "6px", fontSize: "14px", marginLeft: "8px", background: "#fafafa" };

@@ -5,11 +5,12 @@ import axios from "axios";
 const API = "https://survey-backend-pqqt.onrender.com/api";
 
 export default function Survey() {
-  const [config, setConfig] = useState({ title: "Survey Form", description: "", fields: [] });
+  const [config, setConfig] = useState({ title: "Survey", description: "", fields: [] });
   const [form, setForm] = useState({});
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [focused, setFocused] = useState(null);
 
   useEffect(() => {
     axios.get(`${API}/survey/config`)
@@ -41,51 +42,93 @@ export default function Survey() {
       await axios.post(`${API}/survey`, { responseData: form });
       setSubmitted(true);
     } catch {
-      setError("Submission failed. Please try again.");
+      setError("Submission failed. Please check your connection and try again.");
     }
   };
 
-  const renderField = (field) => {
-    const baseInput = { width: "100%", padding: "10px 14px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "15px", boxSizing: "border-box", outline: "none", background: "#fff", transition: "border 0.2s" };
+  const inputBase = (name) => ({
+    width: "100%",
+    padding: "11px 14px",
+    border: `1.5px solid ${focused === name ? "#6366f1" : "#e2e8f0"}`,
+    borderRadius: "7px",
+    fontSize: "15px",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#fff",
+    color: "#0f172a",
+    transition: "border-color 0.15s",
+  });
 
+  const renderField = (field) => {
     switch (field.type) {
       case "section":
         return (
-          <div style={{ borderTop: "2px solid #e5e7eb", paddingTop: "8px" }}>
-            {field.label && <p style={{ margin: 0, fontWeight: "700", fontSize: "17px", color: "#333" }}>{field.label}</p>}
+          <div style={{ paddingBottom: "4px" }}>
+            {field.label && <p style={{ margin: 0, fontSize: "17px", fontWeight: "700", color: "#0f172a" }}>{field.label}</p>}
+            <div style={{ height: "1px", background: "#e2e8f0", marginTop: "10px" }} />
           </div>
         );
 
       case "long_text":
-        return <textarea name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} rows={4} placeholder="Your answer" style={{ ...baseInput, resize: "vertical" }} />;
+        return (
+          <textarea
+            name={field.name}
+            value={form[field.name] || ""}
+            onChange={handleChange}
+            onFocus={() => setFocused(field.name)}
+            onBlur={() => setFocused(null)}
+            required={field.required}
+            rows={4}
+            placeholder="Type your answer here..."
+            style={{ ...inputBase(field.name), resize: "vertical" }}
+          />
+        );
 
       case "multiple_choice":
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {field.options?.map((opt, i) => (
-              <label key={i} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", padding: "10px 14px", border: `2px solid ${form[field.name] === opt ? "#6750a4" : "#e5e7eb"}`, borderRadius: "8px", background: form[field.name] === opt ? "#f5f3ff" : "#fff", transition: "all 0.15s" }}>
-                <input type="radio" name={field.name} value={opt} checked={form[field.name] === opt} onChange={handleChange} required={field.required} style={{ accentColor: "#6750a4" }} />
-                <span style={{ fontSize: "15px", color: "#333" }}>{opt}</span>
-              </label>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {field.options?.map((opt, i) => {
+              const selected = form[field.name] === opt;
+              return (
+                <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${selected ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: selected ? "#eef2ff" : "#fff", cursor: "pointer", transition: "all 0.15s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "50%", border: `2px solid ${selected ? "#6366f1" : "#cbd5e1"}`, background: selected ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {selected && <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#fff" }} />}
+                  </div>
+                  <input type="radio" name={field.name} value={opt} checked={selected} onChange={handleChange} style={{ display: "none" }} />
+                  <span style={{ fontSize: "14px", color: selected ? "#4338ca" : "#374151", fontWeight: selected ? "600" : "400" }}>{opt}</span>
+                </label>
+              );
+            })}
           </div>
         );
 
       case "checkbox":
         return (
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {field.options?.map((opt, i) => (
-              <label key={i} style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", padding: "10px 14px", border: `2px solid ${(form[field.name] || []).includes(opt) ? "#6750a4" : "#e5e7eb"}`, borderRadius: "8px", background: (form[field.name] || []).includes(opt) ? "#f5f3ff" : "#fff", transition: "all 0.15s" }}>
-                <input type="checkbox" checked={(form[field.name] || []).includes(opt)} onChange={e => handleCheckbox(field.name, opt, e.target.checked)} style={{ accentColor: "#6750a4", width: "16px", height: "16px" }} />
-                <span style={{ fontSize: "15px", color: "#333" }}>{opt}</span>
-              </label>
-            ))}
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+            {field.options?.map((opt, i) => {
+              const checked = (form[field.name] || []).includes(opt);
+              return (
+                <label key={i} style={{ display: "flex", alignItems: "center", gap: "12px", padding: "12px 16px", border: `1.5px solid ${checked ? "#6366f1" : "#e2e8f0"}`, borderRadius: "8px", background: checked ? "#eef2ff" : "#fff", cursor: "pointer", transition: "all 0.15s" }}>
+                  <div style={{ width: "18px", height: "18px", borderRadius: "4px", border: `2px solid ${checked ? "#6366f1" : "#cbd5e1"}`, background: checked ? "#6366f1" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, transition: "all 0.15s" }}>
+                    {checked && <span style={{ color: "#fff", fontSize: "12px", fontWeight: "800", lineHeight: 1 }}>✓</span>}
+                  </div>
+                  <input type="checkbox" checked={checked} onChange={e => handleCheckbox(field.name, opt, e.target.checked)} style={{ display: "none" }} />
+                  <span style={{ fontSize: "14px", color: checked ? "#4338ca" : "#374151", fontWeight: checked ? "600" : "400" }}>{opt}</span>
+                </label>
+              );
+            })}
           </div>
         );
 
       case "dropdown":
         return (
-          <select name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} style={{ ...baseInput }}>
+          <select
+            name={field.name}
+            value={form[field.name] || ""}
+            onChange={handleChange}
+            required={field.required}
+            style={{ ...inputBase(field.name), background: "#fff" }}
+          >
             <option value="">Select an option</option>
             {field.options?.map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
           </select>
@@ -98,49 +141,56 @@ export default function Survey() {
         return (
           <div>
             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-              {scale.map(val => (
-                <button key={val} type="button" onClick={() => setForm({ ...form, [field.name]: val })} style={{ width: "44px", height: "44px", borderRadius: "50%", border: `2px solid ${form[field.name] === val ? "#6750a4" : "#d1d5db"}`, background: form[field.name] === val ? "#6750a4" : "#fff", color: form[field.name] === val ? "#fff" : "#333", fontWeight: "700", fontSize: "15px", cursor: "pointer", transition: "all 0.15s" }}>
-                  {val}
-                </button>
-              ))}
+              {scale.map(val => {
+                const selected = form[field.name] === val;
+                return (
+                  <button key={val} type="button" onClick={() => setForm({ ...form, [field.name]: val })} style={{ width: "46px", height: "46px", borderRadius: "8px", border: `1.5px solid ${selected ? "#6366f1" : "#e2e8f0"}`, background: selected ? "#6366f1" : "#fff", color: selected ? "#fff" : "#374151", fontWeight: "700", fontSize: "15px", cursor: "pointer", transition: "all 0.15s" }}>
+                    {val}
+                  </button>
+                );
+              })}
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "6px" }}>
-              <span style={{ fontSize: "12px", color: "#888" }}>{min} = Not likely</span>
-              <span style={{ fontSize: "12px", color: "#888" }}>Very likely = {max}</span>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}>
+              <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>Not likely</span>
+              <span style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "500" }}>Very likely</span>
             </div>
           </div>
         );
 
       case "date":
-        return <input type="date" name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} style={baseInput} />;
+        return <input type="date" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} style={inputBase(field.name)} />;
 
       case "time":
-        return <input type="time" name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} style={baseInput} />;
+        return <input type="time" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} style={inputBase(field.name)} />;
 
       case "email":
-        return <input type="email" name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} placeholder="example@email.com" style={baseInput} />;
+        return <input type="email" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="example@email.com" style={inputBase(field.name)} />;
 
       case "number":
-        return <input type="number" name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} placeholder="Enter a number" style={baseInput} />;
+        return <input type="number" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="Enter a number" style={inputBase(field.name)} />;
 
       default:
-        return <input type="text" name={field.name} value={form[field.name] || ""} onChange={handleChange} required={field.required} placeholder="Your answer" style={baseInput} />;
+        return <input type="text" name={field.name} value={form[field.name] || ""} onChange={handleChange} onFocus={() => setFocused(field.name)} onBlur={() => setFocused(null)} required={field.required} placeholder="Your answer" style={inputBase(field.name)} />;
     }
   };
 
   if (loading) return (
-    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Segoe UI, Arial, sans-serif" }}>
-      <p style={{ color: "#9ca3af", fontSize: "16px" }}>Loading form...</p>
+    <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Segoe UI, system-ui, sans-serif", background: "#f4f5f7" }}>
+      <p style={{ color: "#94a3b8", fontSize: "15px", fontWeight: "500" }}>Loading...</p>
     </div>
   );
 
   if (submitted) return (
-    <div style={{ minHeight: "100vh", background: "#f0f2f5", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Segoe UI, Arial, sans-serif" }}>
-      <div style={{ background: "#fff", padding: "56px 48px", borderRadius: "16px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.08)", maxWidth: "420px" }}>
-        <div style={{ width: "72px", height: "72px", background: "#f0fdf4", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: "32px" }}>✅</div>
-        <h2 style={{ margin: "0 0 8px", color: "#111", fontSize: "24px", fontWeight: "800" }}>Thank you!</h2>
-        <p style={{ color: "#6b7280", margin: "0 0 28px", fontSize: "15px" }}>Your response has been recorded successfully.</p>
-        <button onClick={() => { setSubmitted(false); const init = {}; config.fields.forEach(f => { if (f.type === "checkbox") init[f.name] = []; else init[f.name] = ""; }); setForm(init); }} style={{ padding: "12px 28px", background: "#6750a4", color: "#fff", border: "none", borderRadius: "10px", cursor: "pointer", fontWeight: "700", fontSize: "15px" }}>
+    <div style={{ minHeight: "100vh", background: "#f4f5f7", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Segoe UI, system-ui, sans-serif" }}>
+      <div style={{ background: "#fff", padding: "64px 56px", borderRadius: "12px", textAlign: "center", boxShadow: "0 4px 24px rgba(0,0,0,0.06)", maxWidth: "440px", border: "1px solid #e5e7eb" }}>
+        <div style={{ width: "64px", height: "64px", background: "#eef2ff", borderRadius: "12px", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 24px" }}>
+          <div style={{ width: "28px", height: "28px", border: "3px solid #6366f1", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#6366f1", fontSize: "14px", fontWeight: "800" }}>✓</span>
+          </div>
+        </div>
+        <h2 style={{ margin: "0 0 10px", color: "#0f172a", fontSize: "22px", fontWeight: "800" }}>Response Recorded</h2>
+        <p style={{ color: "#64748b", margin: "0 0 32px", fontSize: "15px", lineHeight: "1.6" }}>Thank you for completing this survey. Your response has been saved successfully.</p>
+        <button onClick={() => { setSubmitted(false); const init = {}; config.fields.forEach(f => { if (f.type === "checkbox") init[f.name] = []; else init[f.name] = ""; }); setForm(init); }} style={{ padding: "11px 28px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "700", fontSize: "14px" }}>
           Submit Another Response
         </button>
       </div>
@@ -148,29 +198,36 @@ export default function Survey() {
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#f0f2f5", fontFamily: "'Segoe UI', Arial, sans-serif", paddingBottom: "60px" }}>
+    <div style={{ minHeight: "100vh", background: "#f4f5f7", fontFamily: "'Segoe UI', system-ui, sans-serif", paddingBottom: "80px" }}>
 
-      {/* Header Card */}
-      <div style={{ maxWidth: "680px", margin: "0 auto", paddingTop: "40px", paddingLeft: "20px", paddingRight: "20px" }}>
-        <div style={{ background: "#fff", borderRadius: "12px", overflow: "hidden", marginBottom: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
-          <div style={{ height: "10px", background: "linear-gradient(90deg, #6750a4, #9c27b0)" }} />
-          <div style={{ padding: "28px 32px" }}>
-            <h1 style={{ margin: "0 0 8px", fontSize: "28px", fontWeight: "800", color: "#111" }}>{config.title}</h1>
-            {config.description && <p style={{ margin: 0, color: "#555", fontSize: "15px", lineHeight: "1.6" }}>{config.description}</p>}
-            <p style={{ margin: "12px 0 0", fontSize: "13px", color: "#ef4444" }}>* Required</p>
+      {/* Top bar */}
+      <div style={{ background: "#0f1117", height: "4px", width: "100%" }} />
+      <div style={{ background: "#fff", borderBottom: "1px solid #e5e7eb", padding: "0 32px", height: "52px", display: "flex", alignItems: "center" }}>
+        <span style={{ fontSize: "15px", fontWeight: "700", color: "#0f172a", letterSpacing: "0.2px" }}>FormBuilder</span>
+        <span style={{ margin: "0 10px", color: "#e2e8f0" }}>/</span>
+        <span style={{ fontSize: "14px", color: "#64748b" }}>{config.title}</span>
+      </div>
+
+      <div style={{ maxWidth: "660px", margin: "0 auto", padding: "40px 20px" }}>
+
+        {/* Title card */}
+        <div style={{ background: "#fff", borderRadius: "10px", padding: "32px 36px", marginBottom: "14px", border: "1px solid #e5e7eb", boxShadow: "0 1px 4px rgba(0,0,0,0.04)", borderTop: "4px solid #6366f1" }}>
+          <h1 style={{ margin: "0 0 10px", fontSize: "26px", fontWeight: "800", color: "#0f172a", lineHeight: "1.3" }}>{config.title}</h1>
+          {config.description && <p style={{ margin: 0, color: "#64748b", fontSize: "15px", lineHeight: "1.7" }}>{config.description}</p>}
+          <div style={{ marginTop: "16px", padding: "10px 14px", background: "#fef9ec", border: "1px solid #fde68a", borderRadius: "6px" }}>
+            <p style={{ margin: 0, fontSize: "12px", color: "#92400e", fontWeight: "600" }}>Fields marked with <span style={{ color: "#dc2626" }}>*</span> are required.</p>
           </div>
         </div>
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
-          {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "12px 16px", borderRadius: "10px", marginBottom: "12px", fontSize: "14px" }}>{error}</div>}
+          {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "12px 16px", borderRadius: "8px", marginBottom: "14px", fontSize: "14px", fontWeight: "500" }}>{error}</div>}
 
           {config.fields.map((field) => (
-            <div key={field.name} style={{ background: "#fff", borderRadius: "12px", padding: field.type === "section" ? "16px 32px" : "24px 32px", marginBottom: "12px", boxShadow: "0 2px 8px rgba(0,0,0,0.06)" }}>
+            <div key={field.name} style={{ background: field.type === "section" ? "transparent" : "#fff", borderRadius: "10px", padding: field.type === "section" ? "8px 0" : "24px 36px", marginBottom: "12px", border: field.type === "section" ? "none" : "1px solid #e5e7eb", boxShadow: field.type === "section" ? "none" : "0 1px 4px rgba(0,0,0,0.04)" }}>
               {field.type !== "section" && (
-                <label style={{ display: "block", fontSize: "15px", fontWeight: "600", color: "#111", marginBottom: "14px" }}>
+                <label style={{ display: "block", fontSize: "14px", fontWeight: "600", color: "#0f172a", marginBottom: "12px", lineHeight: "1.5" }}>
                   {field.label}
-                  {field.required && <span style={{ color: "#ef4444", marginLeft: "4px" }}>*</span>}
+                  {field.required && <span style={{ color: "#dc2626", marginLeft: "4px" }}>*</span>}
                 </label>
               )}
               {renderField(field)}
@@ -178,18 +235,18 @@ export default function Survey() {
           ))}
 
           {config.fields.filter(f => f.type !== "section").length > 0 && (
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "8px" }}>
-              <button type="submit" style={{ padding: "13px 36px", background: "#6750a4", color: "#fff", border: "none", borderRadius: "10px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 2px 8px rgba(103,80,164,0.3)" }}>
-                Submit
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px" }}>
+              <button type="submit" style={{ padding: "12px 36px", background: "#0f1117", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.3px" }}>
+                Submit Response
               </button>
-              <button type="button" onClick={() => { const init = {}; config.fields.forEach(f => { if (f.type === "checkbox") init[f.name] = []; else init[f.name] = ""; }); setForm(init); }} style={{ background: "none", border: "none", color: "#6750a4", cursor: "pointer", fontSize: "14px", fontWeight: "600" }}>
-                Clear form
+              <button type="button" onClick={() => { const init = {}; config.fields.forEach(f => { if (f.type === "checkbox") init[f.name] = []; else init[f.name] = ""; }); setForm(init); }} style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", fontSize: "13px", fontWeight: "600" }}>
+                Clear all
               </button>
             </div>
           )}
         </form>
 
-        <p style={{ textAlign: "center", marginTop: "32px", fontSize: "12px", color: "#bbb" }}>Powered by SurveyApp</p>
+        <p style={{ textAlign: "center", marginTop: "40px", fontSize: "12px", color: "#cbd5e1", letterSpacing: "0.5px" }}>POWERED BY FORMBUILDER</p>
       </div>
     </div>
   );

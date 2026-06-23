@@ -8,6 +8,7 @@ export default function Register() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [focused, setFocused] = useState(null);
   const navigate = useNavigate();
 
   const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
@@ -17,71 +18,65 @@ export default function Register() {
     setError("");
     try {
       await axios.post(`${API}/auth/register`, form);
-      setSuccess("Account created! Redirecting to login...");
+      setSuccess("Account created. Redirecting...");
       setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       setError(err.response?.data?.error || "Registration failed");
     }
   };
 
+  const inputStyle = (name) => ({
+    width: "100%",
+    padding: "11px 14px",
+    border: `1.5px solid ${focused === name ? "#6366f1" : "#e2e8f0"}`,
+    borderRadius: "7px",
+    fontSize: "14px",
+    boxSizing: "border-box",
+    outline: "none",
+    background: "#fafafa",
+    color: "#0f172a",
+    transition: "border-color 0.15s",
+  });
+
   return (
-    <div style={pageStyle}>
-      <div style={cardStyle}>
-        <h1 style={titleStyle}>Create Account</h1>
-        <p style={subtitleStyle}>Get started with Survey App</p>
+    <div style={{ minHeight: "100vh", background: "#f4f5f7", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Segoe UI', system-ui, sans-serif" }}>
+      <div style={{ width: "100%", maxWidth: "400px", padding: "0 20px" }}>
 
-        {error && <div style={errorStyle}>{error}</div>}
-        {success && <div style={successStyle}>{success}</div>}
-
-        <form onSubmit={handleSubmit}>
-          <div style={fieldStyle}>
-            <label style={labelStyle}>Email</label>
-            <input
-              name="email"
-              type="email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              placeholder="you@example.com"
-              style={inputStyle}
-            />
-            <p style={hintStyle}>Use "admin" in your email to get admin access (e.g. admin@company.com)</p>
+        <div style={{ textAlign: "center", marginBottom: "32px" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
+            <div style={{ width: "6px", height: "24px", background: "#6366f1", borderRadius: "2px" }} />
+            <span style={{ fontSize: "20px", fontWeight: "800", color: "#0f172a" }}>FormBuilder</span>
           </div>
-          <div style={fieldStyle}>
-            <label style={labelStyle}>Password</label>
-            <input
-              name="password"
-              type="password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              placeholder="Min 6 characters"
-              style={inputStyle}
-            />
-          </div>
-          <button type="submit" style={btnStyle}>Create Account</button>
-        </form>
+          <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8" }}>Create your account</p>
+        </div>
 
-        <p style={{ textAlign: "center", marginTop: "20px", color: "#666", fontSize: "14px" }}>
-          Already have an account?{" "}
-          <Link to="/login" style={{ color: "#4f46e5", textDecoration: "none", fontWeight: "600" }}>
-            Sign In
-          </Link>
-        </p>
+        <div style={{ background: "#fff", borderRadius: "12px", padding: "36px 32px", border: "1px solid #e5e7eb", boxShadow: "0 2px 12px rgba(0,0,0,0.05)" }}>
+          {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "10px 14px", borderRadius: "7px", fontSize: "13px", marginBottom: "20px", fontWeight: "500" }}>{error}</div>}
+          {success && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#15803d", padding: "10px 14px", borderRadius: "7px", fontSize: "13px", marginBottom: "20px", fontWeight: "500" }}>{success}</div>}
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ marginBottom: "16px" }}>
+              <label style={lbl}>Email address</label>
+              <input name="email" type="email" value={form.email} onChange={handleChange} onFocus={() => setFocused("email")} onBlur={() => setFocused(null)} required placeholder="you@company.com" style={inputStyle("email")} />
+              <p style={{ margin: "6px 0 0", fontSize: "12px", color: "#94a3b8" }}>Include "admin" in email for admin access</p>
+            </div>
+            <div style={{ marginBottom: "24px" }}>
+              <label style={lbl}>Password</label>
+              <input name="password" type="password" value={form.password} onChange={handleChange} onFocus={() => setFocused("password")} onBlur={() => setFocused(null)} required placeholder="Min 6 characters" style={inputStyle("password")} />
+            </div>
+            <button type="submit" style={{ width: "100%", padding: "12px", background: "#0f1117", color: "#fff", border: "none", borderRadius: "8px", fontSize: "14px", fontWeight: "700", cursor: "pointer", letterSpacing: "0.3px" }}>
+              Create Account
+            </button>
+          </form>
+
+          <p style={{ textAlign: "center", marginTop: "20px", fontSize: "13px", color: "#94a3b8" }}>
+            Already have an account?{" "}
+            <Link to="/login" style={{ color: "#6366f1", textDecoration: "none", fontWeight: "700" }}>Sign in</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
 }
 
-const pageStyle = { minHeight: "100vh", background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Segoe UI, Arial, sans-serif" };
-const cardStyle = { background: "#fff", padding: "40px", borderRadius: "12px", boxShadow: "0 4px 20px rgba(0,0,0,0.08)", width: "100%", maxWidth: "420px" };
-const titleStyle = { margin: "0 0 4px", fontSize: "24px", fontWeight: "700", color: "#111", textAlign: "center" };
-const subtitleStyle = { margin: "0 0 28px", color: "#666", fontSize: "14px", textAlign: "center" };
-const fieldStyle = { marginBottom: "16px" };
-const labelStyle = { display: "block", marginBottom: "6px", fontSize: "14px", fontWeight: "600", color: "#374151" };
-const inputStyle = { width: "100%", padding: "10px 12px", border: "1px solid #d1d5db", borderRadius: "8px", fontSize: "14px", boxSizing: "border-box" };
-const btnStyle = { width: "100%", padding: "11px", background: "#4f46e5", color: "#fff", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "600", cursor: "pointer", marginTop: "8px" };
-const errorStyle = { background: "#fef2f2", border: "1px solid #fecaca", color: "#dc2626", padding: "10px 14px", borderRadius: "8px", fontSize: "14px", marginBottom: "16px" };
-const successStyle = { background: "#f0fdf4", border: "1px solid #bbf7d0", color: "#16a34a", padding: "10px 14px", borderRadius: "8px", fontSize: "14px", marginBottom: "16px" };
-const hintStyle = { fontSize: "12px", color: "#9ca3af", marginTop: "4px" };
-// camel casing were done
+const lbl = { display: "block", fontSize: "12px", fontWeight: "700", color: "#374151", marginBottom: "6px", letterSpacing: "0.3px", textTransform: "uppercase" };
