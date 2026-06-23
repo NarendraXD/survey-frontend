@@ -40,9 +40,7 @@ export default function Survey() {
     e.preventDefault();
     setError("");
     try {
-      await axios.post(`${API}/survey`, { responseData: form }, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      await axios.post(`${API}/survey`, { responseData: form });
       setSubmitted(true);
     } catch (err) {
       setError("Submission failed. Please try again.");
