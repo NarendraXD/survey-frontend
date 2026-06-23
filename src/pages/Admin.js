@@ -23,6 +23,7 @@ export default function Admin() {
   const [fields, setFields] = useState([]);
   const [title, setTitle] = useState("Untitled Survey");
   const [description, setDescription] = useState("");
+  const [targetEmail, setTargetEmail] = useState(""); // New state for assigning
   const [entries, setEntries] = useState([]);
   const [tab, setTab] = useState("fields");
   const [message, setMessage] = useState("");
@@ -31,40 +32,48 @@ export default function Admin() {
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
   const email = localStorage.getItem("email") || "";
-  const surveyLink = `${window.location.origin}/survey`;
 
   useEffect(() => {
     if (!token) { navigate("/login"); return; }
-    fetchConfig();
     fetchEntries();
-  }, []);
-
-  const fetchConfig = async () => {
-    try {
-      const res = await axios.get(`${API}/survey/config`);
-      setFields(res.data.fields || []);
-      setTitle(res.data.title || "Untitled Survey");
-      setDescription(res.data.description || "");
-    } catch { }
-  };
+  }, [tab]);
 
   const fetchEntries = async () => {
     try {
-      const res = await axios.get(`${API}/survey`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await axios.get(`${API}/survey/all`, { headers: { Authorization: `Bearer ${token}` } });
       setEntries(res.data);
     } catch { }
   };
 
-  const saveConfig = async (updatedFields, t, d) => {
+  const handleSendSurvey = async () => {
+    if (!targetEmail) {
+      setError("Please specify an email to assign this survey to.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+    if (fields.length === 0) {
+      setError("Please add at least one question.");
+      setTimeout(() => setError(""), 3000);
+      return;
+    }
+
     try {
-      await axios.post(`${API}/survey/config`, {
-        title: t !== undefined ? t : title,
-        description: d !== undefined ? d : description,
-        fields: updatedFields
+      await axios.post(`${API}/survey/create`, {
+        title,
+        description,
+        fields,
+        assignedTo: targetEmail,
+        adminEmail: email
       }, { headers: { Authorization: `Bearer ${token}` } });
-      showMessage("Changes saved");
+      
+      showMessage(`Survey sent successfully to ${targetEmail}`);
+      // Reset the form builder for the next survey
+      setFields([]);
+      setTitle("Untitled Survey");
+      setDescription("");
+      setTargetEmail("");
     } catch {
-      setError("Failed to save.");
+      setError("Failed to send survey.");
       setTimeout(() => setError(""), 3000);
     }
   };
@@ -81,16 +90,12 @@ export default function Admin() {
       ? `section_${Date.now()}`
       : newField.label.toLowerCase().replace(/\s+/g, "_") + "_" + Date.now();
     const field = { ...newField, name };
-    const updated = [...fields, field];
-    setFields(updated);
-    saveConfig(updated);
+    setFields([...fields, field]);
     setNewField({ label: "", type: "short_text", required: true, options: ["Option 1", "Option 2"], scaleMin: 1, scaleMax: 5 });
   };
 
   const handleDelete = (name) => {
-    const updated = fields.filter(f => f.name !== name);
-    setFields(updated);
-    saveConfig(updated);
+    setFields(fields.filter(f => f.name !== name));
   };
 
   const moveField = (index, direction) => {
@@ -99,7 +104,6 @@ export default function Admin() {
     if (target < 0 || target >= updated.length) return;
     [updated[index], updated[target]] = [updated[target], updated[index]];
     setFields(updated);
-    saveConfig(updated);
   };
 
   const updateOption = (fieldIndex, optIndex, value) => {
@@ -145,23 +149,12 @@ export default function Admin() {
 
       <div style={{ maxWidth: "880px", margin: "0 auto", padding: "36px 24px" }}>
 
-        {/* Share Banner */}
-        <div style={{ background: "#0f1117", borderRadius: "10px", padding: "18px 24px", marginBottom: "28px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px", border: "1px solid #1e293b" }}>
-          <div>
-            <p style={{ margin: 0, fontWeight: "600", color: "#e2e8f0", fontSize: "13px", letterSpacing: "0.5px", textTransform: "uppercase" }}>Survey Link</p>
-            <p style={{ margin: "4px 0 0", fontSize: "13px", color: "#6366f1", fontFamily: "monospace" }}>{surveyLink}</p>
-          </div>
-          <button onClick={() => { navigator.clipboard.writeText(surveyLink); showMessage("Link copied to clipboard"); }} style={{ padding: "9px 20px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px", letterSpacing: "0.3px" }}>
-            Copy Link
-          </button>
-        </div>
-
         {message && <div style={{ background: "#f0fdf4", border: "1px solid #86efac", color: "#15803d", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px", fontWeight: "600" }}>{message}</div>}
         {error && <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", color: "#dc2626", padding: "11px 16px", borderRadius: "8px", marginBottom: "16px", fontSize: "13px" }}>{error}</div>}
 
         {/* Tabs */}
         <div style={{ display: "flex", borderBottom: "2px solid #e5e7eb", marginBottom: "28px", gap: "0" }}>
-          {[{ key: "fields", label: "Form Builder" }, { key: "entries", label: `Responses  ${entries.length}` }].map(t => (
+          {[{ key: "fields", label: "Send New Survey" }, { key: "entries", label: `Sent / Responses  ${entries.length}` }].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{ padding: "12px 24px", background: "transparent", border: "none", borderBottom: tab === t.key ? "2px solid #6366f1" : "2px solid transparent", marginBottom: "-2px", cursor: "pointer", fontWeight: tab === t.key ? "700" : "500", color: tab === t.key ? "#6366f1" : "#6b7280", fontSize: "14px", letterSpacing: "0.2px" }}>
               {t.label}
             </button>
@@ -170,19 +163,28 @@ export default function Admin() {
 
         {tab === "fields" && (
           <div>
+            {/* Assignment Card */}
+            <div style={{ background: "#0f1117", borderRadius: "10px", padding: "20px 32px", marginBottom: "16px", border: "1px solid #1e293b" }}>
+              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#94a3b8", marginBottom: "8px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Assign To User (Email)</label>
+              <input 
+                value={targetEmail} 
+                onChange={e => setTargetEmail(e.target.value)} 
+                placeholder="user@company.com" 
+                style={{ width: "100%", padding: "12px 14px", borderRadius: "6px", border: "1px solid #334155", background: "#1e293b", color: "#fff", fontSize: "14px", outline: "none", boxSizing: "border-box" }} 
+              />
+            </div>
+
             {/* Title Card */}
             <div style={{ background: "#fff", borderRadius: "10px", padding: "28px 32px", marginBottom: "16px", border: "1px solid #e5e7eb", borderLeft: "4px solid #6366f1" }}>
               <input
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                onBlur={() => saveConfig(fields, title, description)}
                 placeholder="Survey Title"
                 style={{ width: "100%", border: "none", fontSize: "22px", fontWeight: "800", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box", borderBottom: "2px solid #f1f5f9" }}
               />
               <input
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                onBlur={() => saveConfig(fields, title, description)}
                 placeholder="Add a description..."
                 style={{ width: "100%", border: "none", fontSize: "14px", color: "#64748b", padding: "8px 0 0", outline: "none", boxSizing: "border-box" }}
               />
@@ -195,7 +197,7 @@ export default function Admin() {
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ flex: 1 }}>
                       <p style={{ margin: "0 0 6px", fontSize: "10px", fontWeight: "800", color: "#94a3b8", letterSpacing: "2px", textTransform: "uppercase" }}>Section</p>
-                      <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} onBlur={() => saveConfig(fields)} placeholder="Section title" style={{ border: "none", fontSize: "16px", fontWeight: "700", color: "#0f172a", outline: "none", width: "100%" }} />
+                      <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} placeholder="Section title" style={{ border: "none", fontSize: "16px", fontWeight: "700", color: "#0f172a", outline: "none", width: "100%" }} />
                     </div>
                     <div style={{ display: "flex", gap: "6px" }}>
                       <button onClick={() => moveField(i, -1)} style={iconBtn}>↑</button>
@@ -207,13 +209,13 @@ export default function Admin() {
                   <div>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" }}>
                       <div style={{ flex: 1 }}>
-                        <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} onBlur={() => saveConfig(fields)} placeholder="Question" style={{ width: "100%", border: "none", borderBottom: "2px solid #f1f5f9", fontSize: "15px", fontWeight: "600", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box" }} />
+                        <input value={f.label} onChange={e => { const u = [...fields]; u[i].label = e.target.value; setFields(u); }} placeholder="Question" style={{ width: "100%", border: "none", borderBottom: "2px solid #f1f5f9", fontSize: "15px", fontWeight: "600", color: "#0f172a", padding: "0 0 8px", outline: "none", boxSizing: "border-box" }} />
                         <div style={{ display: "flex", gap: "12px", marginTop: "10px", alignItems: "center" }}>
                           <span style={{ fontSize: "11px", background: "#eef2ff", color: "#6366f1", padding: "3px 10px", borderRadius: "4px", fontWeight: "700", letterSpacing: "0.5px" }}>
                             {FIELD_TYPES.find(t => t.value === f.type)?.label?.toUpperCase()}
                           </span>
                           <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#64748b", cursor: "pointer" }}>
-                            <input type="checkbox" checked={f.required} onChange={e => { const u = [...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff); setFields(u); saveConfig(u); }} style={{ accentColor: "#6366f1" }} />
+                            <input type="checkbox" checked={f.required} onChange={e => { const u = [...fields].map((ff, fi) => fi === i ? { ...ff, required: e.target.checked } : ff); setFields(u); }} style={{ accentColor: "#6366f1" }} />
                             Required
                           </label>
                         </div>
@@ -230,11 +232,11 @@ export default function Admin() {
                         {f.options?.map((opt, oi) => (
                           <div key={oi} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "8px" }}>
                             <div style={{ width: "16px", height: "16px", borderRadius: f.type === "checkbox" ? "3px" : "50%", border: "2px solid #cbd5e1", flexShrink: 0 }} />
-                            <input value={opt} onChange={e => updateOption(i, oi, e.target.value)} onBlur={() => saveConfig(fields)} style={{ flex: 1, border: "none", borderBottom: "1px solid #f1f5f9", padding: "4px 0", fontSize: "14px", color: "#374151", outline: "none" }} />
-                            <button onClick={() => { removeOption(i, oi); saveConfig(fields); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: "16px", lineHeight: 1 }}>✕</button>
+                            <input value={opt} onChange={e => updateOption(i, oi, e.target.value)} style={{ flex: 1, border: "none", borderBottom: "1px solid #f1f5f9", padding: "4px 0", fontSize: "14px", color: "#374151", outline: "none" }} />
+                            <button onClick={() => { removeOption(i, oi); }} style={{ background: "none", border: "none", color: "#cbd5e1", cursor: "pointer", fontSize: "16px", lineHeight: 1 }}>✕</button>
                           </div>
                         ))}
-                        <button onClick={() => { addOption(i); }} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600", padding: "4px 0", marginTop: "4px" }}>+ Add option</button>
+                        <button onClick={() => addOption(i)} style={{ background: "none", border: "none", color: "#6366f1", cursor: "pointer", fontSize: "13px", fontWeight: "600", padding: "4px 0", marginTop: "4px" }}>+ Add option</button>
                       </div>
                     )}
 
@@ -242,13 +244,13 @@ export default function Admin() {
                       <div style={{ marginTop: "14px", display: "flex", gap: "20px", alignItems: "center" }}>
                         <div>
                           <label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MIN</label>
-                          <select value={f.scaleMin} onChange={e => { const u = [...fields]; u[i].scaleMin = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectSt}>
+                          <select value={f.scaleMin} onChange={e => { const u = [...fields]; u[i].scaleMin = Number(e.target.value); setFields(u); }} style={selectSt}>
                             {[0, 1].map(v => <option key={v} value={v}>{v}</option>)}
                           </select>
                         </div>
                         <div>
                           <label style={{ fontSize: "12px", color: "#94a3b8", fontWeight: "600" }}>MAX</label>
-                          <select value={f.scaleMax} onChange={e => { const u = [...fields]; u[i].scaleMax = Number(e.target.value); setFields(u); saveConfig(u); }} style={selectSt}>
+                          <select value={f.scaleMax} onChange={e => { const u = [...fields]; u[i].scaleMax = Number(e.target.value); setFields(u); }} style={selectSt}>
                             {[2, 3, 4, 5, 6, 7, 8, 9, 10].map(v => <option key={v} value={v}>{v}</option>)}
                           </select>
                         </div>
@@ -294,11 +296,18 @@ export default function Admin() {
                     <input type="checkbox" checked={newField.required} onChange={e => setNewField({ ...newField, required: e.target.checked })} style={{ accentColor: "#6366f1" }} />
                     Mark as required
                   </label>
-                  <button type="submit" style={{ padding: "10px 24px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}>
+                  <button type="submit" style={{ padding: "10px 24px", background: "#f8fafc", color: "#0f172a", border: "1px solid #e2e8f0", borderRadius: "7px", cursor: "pointer", fontWeight: "700", fontSize: "13px" }}>
                     Add Question
                   </button>
                 </div>
               </form>
+            </div>
+
+            {/* SEND BUTTON */}
+            <div style={{ marginTop: "24px", textAlign: "right" }}>
+              <button onClick={handleSendSurvey} style={{ padding: "14px 32px", background: "#6366f1", color: "#fff", border: "none", borderRadius: "8px", fontSize: "15px", fontWeight: "700", cursor: "pointer", boxShadow: "0 4px 14px rgba(99, 102, 241, 0.3)" }}>
+                Send Survey to User
+              </button>
             </div>
           </div>
         )}
@@ -309,30 +318,40 @@ export default function Admin() {
             <div style={{ background: "#fff", borderRadius: "10px", border: "1px solid #e5e7eb", overflow: "hidden" }}>
               <div style={{ padding: "16px 24px", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fafafa" }}>
                 <div>
-                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>All Responses</p>
-                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#94a3b8" }}>{entries.length} total submissions</p>
+                  <p style={{ margin: 0, fontSize: "15px", fontWeight: "700", color: "#0f172a" }}>All Surveys</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "#94a3b8" }}>{entries.length} records</p>
                 </div>
                 <button onClick={fetchEntries} style={{ padding: "8px 16px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "7px", cursor: "pointer", fontSize: "13px", fontWeight: "600", color: "#475569" }}>Refresh</button>
               </div>
               {entries.length === 0 ? (
                 <div style={{ padding: "80px", textAlign: "center" }}>
-                  <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8", fontWeight: "500" }}>No responses submitted yet.</p>
+                  <p style={{ margin: 0, fontSize: "14px", color: "#94a3b8", fontWeight: "500" }}>No surveys have been created.</p>
                 </div>
               ) : (
                 entries.map((entry, i) => (
                   <div key={entry._id} style={{ padding: "20px 24px", borderBottom: i < entries.length - 1 ? "1px solid #f8fafc" : "none" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px" }}>
-                      <span style={{ fontSize: "12px", fontWeight: "700", color: "#6366f1", letterSpacing: "0.5px" }}>RESPONSE #{entries.length - i}</span>
-                      <span style={{ fontSize: "12px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</span>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "14px", flexWrap: "wrap", gap: "10px" }}>
+                      <div>
+                        <span style={{ fontSize: "14px", fontWeight: "800", color: "#0f172a", marginRight: "10px" }}>{entry.title}</span>
+                        <span style={{ fontSize: "11px", padding: "3px 8px", borderRadius: "12px", background: entry.isCompleted ? "#dcfce7" : "#fef9c3", color: entry.isCompleted ? "#166534" : "#854d0e", fontWeight: "700" }}>
+                          {entry.isCompleted ? "COMPLETED" : "PENDING"}
+                        </span>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <p style={{ margin: "0", fontSize: "12px", fontWeight: "600", color: "#64748b" }}>Assigned to: {entry.assignedTo}</p>
+                        <p style={{ margin: "2px 0 0", fontSize: "11px", color: "#94a3b8" }}>{new Date(entry.createdAt).toLocaleString()}</p>
+                      </div>
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
-                      {entry.responseData && Object.entries(entry.responseData).map(([key, val]) => (
-                        <div key={key} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
-                          <p style={{ margin: 0, fontSize: "10px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>{key.replace(/_\d+$/, "").replace(/_/g, " ")}</p>
-                          <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#0f172a", fontWeight: "500" }}>{Array.isArray(val) ? val.join(", ") : String(val)}</p>
-                        </div>
-                      ))}
-                    </div>
+                    {entry.isCompleted && (
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "10px" }}>
+                        {entry.responseData && Object.entries(entry.responseData).map(([key, val]) => (
+                          <div key={key} style={{ background: "#f8fafc", padding: "10px 14px", borderRadius: "8px", border: "1px solid #f1f5f9" }}>
+                            <p style={{ margin: 0, fontSize: "10px", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px" }}>{key.replace(/_\d+$/, "").replace(/_/g, " ")}</p>
+                            <p style={{ margin: "4px 0 0", fontSize: "14px", color: "#0f172a", fontWeight: "500" }}>{Array.isArray(val) ? val.join(", ") : String(val)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
